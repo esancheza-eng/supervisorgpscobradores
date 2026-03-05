@@ -2,12 +2,11 @@
 <html>
 
 <head>
-
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Supervisor GPS Cobradores</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -43,13 +42,18 @@ cursor:pointer;
 border-left:5px solid #22c55e;
 }
 
+.card.almuerzo{
+border-left:5px solid orange;
+}
+
 .card.finalizado{
 border-left:5px solid red;
 }
 
 .nombre{
 font-weight:bold;
-margin-bottom:5px;
+font-size:15px;
+margin-bottom:6px;
 }
 
 .detalle{
@@ -63,11 +67,12 @@ padding:6px 10px;
 border:none;
 border-radius:4px;
 cursor:pointer;
-}
-
-.verRuta{
 background:#2563eb;
 color:white;
+}
+
+button:hover{
+background:#1d4ed8;
 }
 
 </style>
@@ -88,6 +93,8 @@ color:white;
 
 <script>
 
+/* FIREBASE */
+
 var firebaseConfig = {
 
 apiKey: "AIzaSyCW__ndth0b9jYO91QF8x6Psp7-lK1-lW4",
@@ -101,6 +108,8 @@ firebase.initializeApp(firebaseConfig);
 
 var db = firebase.database();
 
+/* MAPA */
+
 var map = L.map('map').setView([-2.17,-79.90],13);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
@@ -110,6 +119,8 @@ maxZoom:19
 var marcadores={};
 
 var rutaMapa=null;
+
+/* LISTAR COBRADORES */
 
 db.ref("cobradores").on("value",function(snapshot){
 
@@ -135,6 +146,8 @@ var finRuta=d.hora_fin_ruta || "-";
 
 var clase="card";
 
+if(estado=="almuerzo") clase="card almuerzo";
+
 if(estado=="finalizado") clase="card finalizado";
 
 var div=document.createElement("div");
@@ -153,13 +166,13 @@ div.innerHTML=
 'Fin Ruta: '+finRuta+
 '</div>';
 
+/* BOTON VER RUTA */
+
 if(estado=="finalizado"){
 
 var btn=document.createElement("button");
 
 btn.innerHTML="VER RUTA";
-
-btn.className="verRuta";
 
 btn.onclick=(function(n){
 
@@ -177,6 +190,24 @@ div.appendChild(btn);
 
 lista.appendChild(div);
 
+/* CLICK EN TARJETA CENTRA MAPA */
+
+if(lat && lon){
+
+div.onclick=(function(lat,lon){
+
+return function(){
+
+map.setView([lat,lon],17);
+
+}
+
+})(lat,lon);
+
+}
+
+/* MARCADORES */
+
 if(lat && lon){
 
 if(!marcadores[nombre]){
@@ -189,11 +220,26 @@ marcadores[nombre].setLatLng([lat,lon]);
 
 }
 
+/* POPUP DEL MARCADOR */
+
+marcadores[nombre].bindPopup(
+
+"<b>"+nombre+"</b><br>"+
+"Estado: "+estado+"<br>"+
+"Inicio: "+inicio+"<br>"+
+"Inicio Almuerzo: "+inicioAlmuerzo+"<br>"+
+"Fin Almuerzo: "+finAlmuerzo+"<br>"+
+"Fin Ruta: "+finRuta
+
+);
+
 }
 
 }
 
 });
+
+/* VER RUTA DEL DIA */
 
 function verRuta(nombre){
 
@@ -207,7 +253,7 @@ var puntos=snapshot.val();
 
 if(!puntos){
 
-alert("No hay ruta registrada");
+alert("No hay ruta registrada ese día");
 
 return;
 
