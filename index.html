@@ -2,9 +2,9 @@
 <html>
 
 <head>
+
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Supervisor GPS Cobradores</title>
+<title>SUPERVISOR GPS COBRADORES</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -22,7 +22,7 @@ height:100vh;
 }
 
 #panel{
-width:330px;
+width:350px;
 background:#0f172a;
 color:white;
 overflow:auto;
@@ -38,11 +38,11 @@ background:#1e293b;
 padding:12px;
 margin-bottom:10px;
 border-radius:8px;
-cursor:pointer;
 border-left:5px solid #22c55e;
+cursor:pointer;
 }
 
-.card.almuerzo{
+.card.detencion{
 border-left:5px solid orange;
 }
 
@@ -52,8 +52,7 @@ border-left:5px solid red;
 
 .nombre{
 font-weight:bold;
-font-size:15px;
-margin-bottom:6px;
+margin-bottom:5px;
 }
 
 .detalle{
@@ -62,17 +61,13 @@ line-height:1.4;
 }
 
 button{
-margin-top:8px;
+margin-top:6px;
 padding:6px 10px;
 border:none;
 border-radius:4px;
-cursor:pointer;
 background:#2563eb;
 color:white;
-}
-
-button:hover{
-background:#1d4ed8;
+cursor:pointer;
 }
 
 </style>
@@ -84,6 +79,8 @@ background:#1d4ed8;
 <div id="panel">
 
 <h2>COBRADORES</h2>
+
+<button onclick="exportarExcel()">EXPORTAR EXCEL</button>
 
 <div id="lista"></div>
 
@@ -118,7 +115,7 @@ maxZoom:19
 
 var marcadores={};
 
-var rutaMapa=null;
+var datosReporte=[];
 
 /* LISTAR COBRADORES */
 
@@ -130,25 +127,38 @@ var lista=document.getElementById("lista");
 
 lista.innerHTML="";
 
+datosReporte=[];
+
 for(var nombre in datos){
 
 var d=datos[nombre];
 
-var estado=d.estado || "-";
-
 var lat=d.latitud;
 var lon=d.longitud;
 
-var inicio=d.hora_inicio || "-";
-var inicioAlmuerzo=d.hora_inicio_almuerzo || "-";
-var finAlmuerzo=d.hora_fin_almuerzo || "-";
-var finRuta=d.hora_fin_ruta || "-";
+var estado=d.estado || "-";
 
 var clase="card";
 
-if(estado=="almuerzo") clase="card almuerzo";
+/* DETECTAR DETENIDO */
 
-if(estado=="finalizado") clase="card finalizado";
+var detenido="";
+
+if(d.ultima_actualizacion){
+
+var minutos=(Date.now()-d.ultima_actualizacion)/60000;
+
+if(minutos>25 && estado=="trabajando"){
+
+detenido="⚠ detenido "+Math.floor(minutos)+" min";
+
+clase="card detencion";
+
+}
+
+}
+
+/* TARJETA */
 
 var div=document.createElement("div");
 
@@ -160,53 +170,12 @@ div.innerHTML=
 
 '<div class="detalle">'+
 'Estado: '+estado+'<br>'+
-'Inicio: '+inicio+'<br>'+
-'Inicio Almuerzo: '+inicioAlmuerzo+'<br>'+
-'Fin Almuerzo: '+finAlmuerzo+'<br>'+
-'Fin Ruta: '+finRuta+
+detenido+
 '</div>';
-
-/* BOTON VER RUTA */
-
-if(estado=="finalizado"){
-
-var btn=document.createElement("button");
-
-btn.innerHTML="VER RUTA";
-
-btn.onclick=(function(n){
-
-return function(){
-
-verRuta(n);
-
-}
-
-})(nombre);
-
-div.appendChild(btn);
-
-}
 
 lista.appendChild(div);
 
-/* CLICK EN TARJETA CENTRA MAPA */
-
-if(lat && lon){
-
-div.onclick=(function(lat,lon){
-
-return function(){
-
-map.setView([lat,lon],17);
-
-}
-
-})(lat,lon);
-
-}
-
-/* MARCADORES */
+/* MARCADOR */
 
 if(lat && lon){
 
@@ -214,76 +183,109 @@ if(!marcadores[nombre]){
 
 marcadores[nombre]=L.marker([lat,lon]).addTo(map);
 
-}else{
+}
+
+else{
 
 marcadores[nombre].setLatLng([lat,lon]);
 
 }
 
-/* POPUP DEL MARCADOR */
+marcadores[nombre].bindPopup("<b>"+nombre+"</b><br>"+estado);
 
-marcadores[nombre].bindPopup(
+}
 
-"<b>"+nombre+"</b><br>"+
-"Estado: "+estado+"<br>"+
-"Inicio: "+inicio+"<br>"+
-"Inicio Almuerzo: "+inicioAlmuerzo+"<br>"+
-"Fin Almuerzo: "+finAlmuerzo+"<br>"+
-"Fin Ruta: "+finRuta
+}
 
+});
+
+/* CALCULAR DISTANCIA */
+
+function distancia(lat1,lon1,lat2,lon2){
+
+var R=6371;
+
+var dLat=(lat2-lat1)*Math.PI/180;
+
+var dLon=(lon2-lon1)*Math.PI/180;
+
+var a=
+Math.sin(dLat/2)*Math.sin(dLat/2)+
+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*
+Math.sin(dLon/2)*Math.sin(dLon/2);
+
+var c=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+
+return R*c;
+
+}
+
+/* EXPORTAR EXCEL */
+
+function exportarExcel(){
+
+var fecha=new Date().toISOString().split('T')[0];
+
+var csv="COBRADOR,KM RECORRIDOS\n";
+
+db.ref("rutas").once("value",function(snapshot){
+
+var rutas=snapshot.val();
+
+for(var cobrador in rutas){
+
+if(!rutas[cobrador][fecha]) continue;
+
+var puntos=rutas[cobrador][fecha];
+
+var total=0;
+
+var anterior=null;
+
+for(var id in puntos){
+
+var p=puntos[id];
+
+if(anterior){
+
+total+=distancia(
+anterior.latitud,
+anterior.longitud,
+p.latitud,
+p.longitud
 );
 
 }
 
+anterior=p;
+
 }
+
+csv+=cobrador+","+total.toFixed(2)+"\n";
+
+}
+
+descargar(csv);
 
 });
 
-/* VER RUTA DEL DIA */
-
-function verRuta(nombre){
-
-var fecha=prompt("Ingrese fecha (YYYY-MM-DD)");
-
-if(!fecha) return;
-
-db.ref("rutas/"+nombre+"/"+fecha).once("value",function(snapshot){
-
-var puntos=snapshot.val();
-
-if(!puntos){
-
-alert("No hay ruta registrada ese día");
-
-return;
-
 }
 
-var coordenadas=[];
+/* DESCARGAR */
 
-for(var id in puntos){
+function descargar(csv){
 
-coordenadas.push([
-puntos[id].latitud,
-puntos[id].longitud
-]);
+var blob=new Blob([csv],{type:"text/csv"});
 
-}
+var url=window.URL.createObjectURL(blob);
 
-if(rutaMapa){
+var a=document.createElement("a");
 
-map.removeLayer(rutaMapa);
+a.href=url;
 
-}
+a.download="reporte_cobradores.csv";
 
-rutaMapa=L.polyline(coordenadas,{
-color:"blue",
-weight:5
-}).addTo(map);
-
-map.fitBounds(rutaMapa.getBounds());
-
-});
+a.click();
 
 }
 
