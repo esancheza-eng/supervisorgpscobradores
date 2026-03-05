@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="utf-8">
+<title>SUPERVISOR COBRADORES</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+<style>
+
+body{
+font-family:Arial;
+}
+
+#map{
+height:90vh;
+width:100%;
+}
+
+#panel{
+padding:10px;
+background:#f2f2f2;
+}
+
+.alerta{
+color:red;
+font-weight:bold;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div id="panel">
+
+<h2>SUPERVISOR DE COBRADORES</h2>
+
+<div id="alertas"></div>
+
+</div>
+
+<div id="map"></div>
+
+<script>
+
+var firebaseConfig = {
+apiKey: "AIzaSyCW__ndth0b9jYO91QF8x6Psp7-lK1-lW4",
+authDomain: "gps-cobradores.firebaseapp.com",
+databaseURL: "https://gps-cobradores-default-rtdb.firebaseio.com",
+projectId: "gps-cobradores"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+var db = firebase.database();
+
+var map = L.map('map').setView([-2.17,-79.90],12);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+maxZoom:19
+}).addTo(map);
+
+var marcadores = {};
+
+var ultimaPosicion = {};
+var tiempoParado = {};
+
+db.ref("cobradores").on("value",function(snapshot){
+
+var datos = snapshot.val();
+
+for(var nombre in datos){
+
+var lat = datos[nombre].latitud;
+var lon = datos[nombre].longitud;
+var estado = datos[nombre].estado;
+var hora = datos[nombre].hora;
+
+var posicionActual = lat+","+lon;
+
+if(!marcadores[nombre]){
+
+marcadores[nombre] = L.marker([lat,lon])
+.addTo(map)
+.bindPopup(nombre);
+
+}else{
+
+marcadores[nombre].setLatLng([lat,lon]);
+
+}
+
+marcadores[nombre].bindPopup(
+"<b>"+nombre+"</b><br>"+
+"Estado: "+estado+"<br>"+
+"Hora: "+hora
+);
+
+if(ultimaPosicion[nombre] == posicionActual){
+
+if(!tiempoParado[nombre]){
+
+tiempoParado[nombre] = Date.now();
+
+}
+
+var minutos = (Date.now()-tiempoParado[nombre])/60000;
+
+if(minutos > 15){
+
+document.getElementById("alertas").innerHTML =
+"<div class='alerta'>⚠ "+nombre+" lleva "+Math.floor(minutos)+" minutos sin moverse</div>";
+
+}
+
+}else{
+
+ultimaPosicion[nombre] = posicionActual;
+tiempoParado[nombre] = Date.now();
+
+}
+
+}
+
+});
+
+</script>
+
+</body>
+</html>
