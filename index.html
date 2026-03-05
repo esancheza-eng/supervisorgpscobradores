@@ -4,7 +4,7 @@
 <head>
 
 <meta charset="utf-8">
-<title>SUPERVISOR COBRADORES</title>
+<title>PANEL SUPERVISOR COBRADORES</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 
@@ -20,14 +20,27 @@ font-family:Arial;
 margin:0;
 }
 
-#map{
-height:90vh;
-width:100%;
+#topbar{
+background:#2c3e50;
+padding:10px;
+}
+
+button{
+padding:8px 12px;
+margin:4px;
+cursor:pointer;
+border:none;
+background:#3498db;
+color:white;
 }
 
 #panel{
 padding:10px;
 background:#f2f2f2;
+}
+
+#map{
+height:85vh;
 }
 
 .alerta{
@@ -41,9 +54,23 @@ font-weight:bold;
 
 <body>
 
+<div id="topbar">
+
+<button onclick="verMapa()">VER MAPA</button>
+
+<button onclick="verActivos()">COBRADORES ACTIVOS</button>
+
+<button onclick="verDetenciones()">DETENCIONES</button>
+
+<button onclick="generarReporte()">REPORTE DEL DÍA</button>
+
+<button onclick="descargarExcel()">DESCARGAR EXCEL</button>
+
+</div>
+
 <div id="panel">
 
-<h2>SUPERVISOR DE COBRADORES</h2>
+<div id="info"></div>
 
 <div id="alertas"></div>
 
@@ -52,8 +79,6 @@ font-weight:bold;
 <div id="map"></div>
 
 <script>
-
-// CONFIGURACIÓN FIREBASE
 
 var firebaseConfig = {
 apiKey: "AIzaSyCW__ndth0b9jYO91QF8x6Psp7-lK1-lW4",
@@ -66,56 +91,43 @@ firebase.initializeApp(firebaseConfig);
 
 var db = firebase.database();
 
-
-// CREAR MAPA
-
 var map = L.map('map').setView([-2.17,-79.90],12);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
 maxZoom:19
 }).addTo(map);
 
-
-// VARIABLES
-
 var marcadores = {};
+
 var ultimaPosicion = {};
 var tiempoParado = {};
 
-
-// LEER DATOS DE COBRADORES
+var reporte = [];
 
 db.ref("cobradores").on("value",function(snapshot){
 
 var datos = snapshot.val();
 
-if(!datos){
-return;
-}
+if(!datos)return;
 
-document.getElementById("alertas").innerHTML = "";
+document.getElementById("alertas").innerHTML="";
+
+reporte=[];
 
 for(var nombre in datos){
 
 var lat = datos[nombre].latitud;
 var lon = datos[nombre].longitud;
-var estado = datos[nombre].estado || "sin estado";
-var hora = datos[nombre].hora || "";
+var estado = datos[nombre].estado;
+var hora = datos[nombre].hora;
 
-if(!lat || !lon){
-continue;
-}
+if(!lat || !lon)continue;
 
-var posicionActual = lat + "," + lon;
-
-
-// CREAR MARCADOR
+var posicionActual = lat+","+lon;
 
 if(!marcadores[nombre]){
 
-marcadores[nombre] = L.marker([lat,lon])
-.addTo(map)
-.bindPopup(nombre);
+marcadores[nombre] = L.marker([lat,lon]).addTo(map);
 
 }else{
 
@@ -123,17 +135,11 @@ marcadores[nombre].setLatLng([lat,lon]);
 
 }
 
-
-// INFORMACIÓN POPUP
-
 marcadores[nombre].bindPopup(
 "<b>"+nombre+"</b><br>"+
 "Estado: "+estado+"<br>"+
 "Hora: "+hora
 );
-
-
-// DETECTAR SI ESTÁ PARADO
 
 if(ultimaPosicion[nombre] == posicionActual){
 
@@ -141,27 +147,98 @@ if(!tiempoParado[nombre]){
 tiempoParado[nombre] = Date.now();
 }
 
-var minutos = (Date.now() - tiempoParado[nombre]) / 60000;
+var minutos = (Date.now()-tiempoParado[nombre])/60000;
 
-if(minutos > 15){
+if(minutos > 25){
 
 document.getElementById("alertas").innerHTML +=
-"<div class='alerta'>⚠ "+nombre+" lleva "+Math.floor(minutos)+" minutos sin moverse</div>";
+"<div class='alerta'>⚠ "+nombre+" detenido "+Math.floor(minutos)+" minutos</div>";
 
 }
 
 }else{
 
-ultimaPosicion[nombre] = posicionActual;
-tiempoParado[nombre] = Date.now();
+ultimaPosicion[nombre]=posicionActual;
+tiempoParado[nombre]=Date.now();
 
 }
+
+reporte.push({
+nombre:nombre,
+estado:estado,
+hora:hora
+});
 
 }
 
 });
 
+function verMapa(){
+
+document.getElementById("info").innerHTML="MAPA EN TIEMPO REAL";
+
+}
+
+function verActivos(){
+
+var texto="";
+
+reporte.forEach(function(c){
+
+texto += c.nombre+" - "+c.estado+"<br>";
+
+});
+
+document.getElementById("info").innerHTML=texto;
+
+}
+
+function verDetenciones(){
+
+document.getElementById("info").innerHTML="Revisar alertas arriba";
+
+}
+
+function generarReporte(){
+
+var texto="";
+
+reporte.forEach(function(c){
+
+texto += c.nombre+" | "+c.estado+" | "+c.hora+"<br>";
+
+});
+
+document.getElementById("info").innerHTML=texto;
+
+}
+
+function descargarExcel(){
+
+var csv="COBRADOR,ESTADO,HORA\n";
+
+reporte.forEach(function(c){
+
+csv += c.nombre+","+c.estado+","+c.hora+"\n";
+
+});
+
+var blob = new Blob([csv], {type:"text/csv"});
+
+var url = window.URL.createObjectURL(blob);
+
+var a = document.createElement("a");
+
+a.href=url;
+
+a.download="reporte_cobradores.csv";
+
+a.click();
+
+}
+
 </script>
 
 </body>
+
 </html>
