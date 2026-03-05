@@ -7,6 +7,7 @@
 <title>Supervisor GPS Cobradores</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -22,7 +23,7 @@ height:100vh;
 }
 
 #panel{
-width:350px;
+width:330px;
 background:#0f172a;
 color:white;
 overflow:auto;
@@ -34,18 +35,12 @@ flex:1;
 }
 
 .card{
-
 background:#1e293b;
 padding:12px;
 margin-bottom:10px;
 border-radius:8px;
 cursor:pointer;
 border-left:5px solid #22c55e;
-
-}
-
-.card.almuerzo{
-border-left:5px solid orange;
 }
 
 .card.finalizado{
@@ -54,13 +49,25 @@ border-left:5px solid red;
 
 .nombre{
 font-weight:bold;
-font-size:16px;
 margin-bottom:5px;
 }
 
 .detalle{
 font-size:13px;
 line-height:1.4;
+}
+
+button{
+margin-top:8px;
+padding:6px 10px;
+border:none;
+border-radius:4px;
+cursor:pointer;
+}
+
+.verRuta{
+background:#2563eb;
+color:white;
 }
 
 </style>
@@ -102,6 +109,8 @@ maxZoom:19
 
 var marcadores={};
 
+var rutaMapa=null;
+
 db.ref("cobradores").on("value",function(snapshot){
 
 var datos=snapshot.val();
@@ -126,8 +135,6 @@ var finRuta=d.hora_fin_ruta || "-";
 
 var clase="card";
 
-if(estado=="almuerzo") clase="card almuerzo";
-
 if(estado=="finalizado") clase="card finalizado";
 
 var div=document.createElement("div");
@@ -139,18 +146,34 @@ div.innerHTML=
 '<div class="nombre">'+nombre+'</div>'+
 
 '<div class="detalle">'+
-
 'Estado: '+estado+'<br>'+
-
 'Inicio: '+inicio+'<br>'+
-
 'Inicio Almuerzo: '+inicioAlmuerzo+'<br>'+
-
 'Fin Almuerzo: '+finAlmuerzo+'<br>'+
-
 'Fin Ruta: '+finRuta+
-
 '</div>';
+
+if(estado=="finalizado"){
+
+var btn=document.createElement("button");
+
+btn.innerHTML="VER RUTA";
+
+btn.className="verRuta";
+
+btn.onclick=(function(n){
+
+return function(){
+
+verRuta(n);
+
+}
+
+})(nombre);
+
+div.appendChild(btn);
+
+}
 
 lista.appendChild(div);
 
@@ -160,45 +183,63 @@ if(!marcadores[nombre]){
 
 marcadores[nombre]=L.marker([lat,lon]).addTo(map);
 
-}
-
-else{
+}else{
 
 marcadores[nombre].setLatLng([lat,lon]);
 
 }
-
-marcadores[nombre].bindPopup(
-
-"<b>"+nombre+"</b><br>"+
-
-"Estado: "+estado+"<br>"+
-
-"Inicio: "+inicio+"<br>"+
-
-"Inicio Almuerzo: "+inicioAlmuerzo+"<br>"+
-
-"Fin Almuerzo: "+finAlmuerzo+"<br>"+
-
-"Fin Ruta: "+finRuta
-
-);
-
-div.onclick=function(lat,lon){
-
-return function(){
-
-map.setView([lat,lon],17);
-
-}
-
-}(lat,lon);
 
 }
 
 }
 
 });
+
+function verRuta(nombre){
+
+var fecha=prompt("Ingrese fecha (YYYY-MM-DD)");
+
+if(!fecha) return;
+
+db.ref("rutas/"+nombre+"/"+fecha).once("value",function(snapshot){
+
+var puntos=snapshot.val();
+
+if(!puntos){
+
+alert("No hay ruta registrada");
+
+return;
+
+}
+
+var coordenadas=[];
+
+for(var id in puntos){
+
+coordenadas.push([
+puntos[id].latitud,
+puntos[id].longitud
+]);
+
+}
+
+if(rutaMapa){
+
+map.removeLayer(rutaMapa);
+
+}
+
+rutaMapa=L.polyline(coordenadas,{
+color:"blue",
+weight:5
+}).addTo(map);
+
+map.fitBounds(rutaMapa.getBounds());
+
+});
+
+}
 
 </script>
 
