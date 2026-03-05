@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 
 <meta charset="utf-8">
@@ -16,6 +17,7 @@
 
 body{
 font-family:Arial;
+margin:0;
 }
 
 #map{
@@ -51,6 +53,8 @@ font-weight:bold;
 
 <script>
 
+// CONFIGURACIÓN FIREBASE
+
 var firebaseConfig = {
 apiKey: "AIzaSyCW__ndth0b9jYO91QF8x6Psp7-lK1-lW4",
 authDomain: "gps-cobradores.firebaseapp.com",
@@ -62,29 +66,50 @@ firebase.initializeApp(firebaseConfig);
 
 var db = firebase.database();
 
+
+// CREAR MAPA
+
 var map = L.map('map').setView([-2.17,-79.90],12);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
 maxZoom:19
 }).addTo(map);
 
-var marcadores = {};
 
+// VARIABLES
+
+var marcadores = {};
 var ultimaPosicion = {};
 var tiempoParado = {};
+
+
+// LEER DATOS DE COBRADORES
 
 db.ref("cobradores").on("value",function(snapshot){
 
 var datos = snapshot.val();
 
+if(!datos){
+return;
+}
+
+document.getElementById("alertas").innerHTML = "";
+
 for(var nombre in datos){
 
 var lat = datos[nombre].latitud;
 var lon = datos[nombre].longitud;
-var estado = datos[nombre].estado;
-var hora = datos[nombre].hora;
+var estado = datos[nombre].estado || "sin estado";
+var hora = datos[nombre].hora || "";
 
-var posicionActual = lat+","+lon;
+if(!lat || !lon){
+continue;
+}
+
+var posicionActual = lat + "," + lon;
+
+
+// CREAR MARCADOR
 
 if(!marcadores[nombre]){
 
@@ -98,25 +123,29 @@ marcadores[nombre].setLatLng([lat,lon]);
 
 }
 
+
+// INFORMACIÓN POPUP
+
 marcadores[nombre].bindPopup(
 "<b>"+nombre+"</b><br>"+
 "Estado: "+estado+"<br>"+
 "Hora: "+hora
 );
 
+
+// DETECTAR SI ESTÁ PARADO
+
 if(ultimaPosicion[nombre] == posicionActual){
 
 if(!tiempoParado[nombre]){
-
 tiempoParado[nombre] = Date.now();
-
 }
 
-var minutos = (Date.now()-tiempoParado[nombre])/60000;
+var minutos = (Date.now() - tiempoParado[nombre]) / 60000;
 
 if(minutos > 15){
 
-document.getElementById("alertas").innerHTML =
+document.getElementById("alertas").innerHTML +=
 "<div class='alerta'>⚠ "+nombre+" lleva "+Math.floor(minutos)+" minutos sin moverse</div>";
 
 }
