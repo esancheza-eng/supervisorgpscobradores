@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
+
 <head>
 
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Supervisor GPS Cobradores</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
@@ -15,60 +15,52 @@
 <style>
 
 body{
-font-family:Arial;
 margin:0;
-background:#0a0f1a;
-color:white;
+font-family:Arial;
 display:flex;
 height:100vh;
-overflow:hidden;
 }
 
-#sidebar{
-width:300px;
-background:#121a2b;
-padding:15px;
+#panel{
+width:350px;
+background:#0f172a;
+color:white;
 overflow:auto;
+padding:15px;
 }
-
-#sidebar h2{
-margin-top:0;
-}
-
-.cobrador{
-padding:10px;
-margin-bottom:6px;
-background:#1b2438;
-cursor:pointer;
-border-radius:6px;
-}
-
-.cobrador:hover{
-background:#233152;
-}
-
-.trabajando{border-left:5px solid #00e676;}
-.almuerzo{border-left:5px solid orange;}
-.finalizado{border-left:5px solid red;}
-.sin{border-left:5px solid gray;}
 
 #map{
 flex:1;
 }
 
-#top{
-position:absolute;
-top:10px;
-right:10px;
-background:#121a2b;
-padding:10px;
-border-radius:6px;
-z-index:999;
+.card{
+
+background:#1e293b;
+padding:12px;
+margin-bottom:10px;
+border-radius:8px;
+cursor:pointer;
+border-left:5px solid #22c55e;
+
 }
 
-.alerta{
-color:red;
-font-size:12px;
+.card.almuerzo{
+border-left:5px solid orange;
+}
+
+.card.finalizado{
+border-left:5px solid red;
+}
+
+.nombre{
+font-weight:bold;
+font-size:16px;
+margin-bottom:5px;
+}
+
+.detalle{
+font-size:13px;
+line-height:1.4;
 }
 
 </style>
@@ -77,13 +69,9 @@ font-size:12px;
 
 <body>
 
-<div id="sidebar">
+<div id="panel">
 
 <h2>COBRADORES</h2>
-
-<input type="text" id="buscar" placeholder="Buscar..." oninput="filtrar(this.value)" style="width:100%;padding:8px">
-
-<br><br>
 
 <div id="lista"></div>
 
@@ -91,77 +79,80 @@ font-size:12px;
 
 <div id="map"></div>
 
-<div id="top">
-
-<button onclick="descargarExcel()">Descargar Excel</button>
-
-<div>
-
-Activos: <span id="activos">0</span><br>
-Almuerzo: <span id="almuerzo">0</span><br>
-Sin GPS: <span id="singps">0</span>
-
-</div>
-
-</div>
-
 <script>
 
-var firebaseConfig={
-apiKey:"AIzaSyCW__ndth0b9jYO91QF8x6Psp7-lK1-lW4",
-authDomain:"gps-cobradores.firebaseapp.com",
-databaseURL:"https://gps-cobradores-default-rtdb.firebaseio.com",
-projectId:"gps-cobradores"
+var firebaseConfig = {
+
+apiKey: "AIzaSyCW__ndth0b9jYO91QF8x6Psp7-lK1-lW4",
+authDomain: "gps-cobradores.firebaseapp.com",
+databaseURL: "https://gps-cobradores-default-rtdb.firebaseio.com",
+projectId: "gps-cobradores"
+
 };
 
 firebase.initializeApp(firebaseConfig);
 
-var db=firebase.database();
+var db = firebase.database();
 
-var map=L.map('map').setView([-2.17,-79.90],12);
+var map = L.map('map').setView([-2.17,-79.90],13);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
 maxZoom:19
 }).addTo(map);
 
 var marcadores={};
-var ultimaPosicion={};
-var tiempoParado={};
-
-var datosGlobal={};
 
 db.ref("cobradores").on("value",function(snapshot){
 
-var datos=snapshot.val()||{};
-
-datosGlobal=datos;
+var datos=snapshot.val();
 
 var lista=document.getElementById("lista");
-lista.innerHTML="";
 
-var activos=0;
-var almuerzo=0;
-var singps=0;
+lista.innerHTML="";
 
 for(var nombre in datos){
 
 var d=datos[nombre];
 
+var estado=d.estado || "-";
+
 var lat=d.latitud;
 var lon=d.longitud;
-var estado=d.estado||"sin";
-var hora=d.hora||"--";
 
-if(!lat || !lon){
+var inicio=d.hora_inicio || "-";
+var inicioAlmuerzo=d.hora_inicio_almuerzo || "-";
+var finAlmuerzo=d.hora_fin_almuerzo || "-";
+var finRuta=d.hora_fin_ruta || "-";
 
-singps++;
+var clase="card";
 
-}else{
+if(estado=="almuerzo") clase="card almuerzo";
 
-if(estado=="trabajando") activos++;
-if(estado=="almuerzo") almuerzo++;
+if(estado=="finalizado") clase="card finalizado";
 
-}
+var div=document.createElement("div");
+
+div.className=clase;
+
+div.innerHTML=
+
+'<div class="nombre">'+nombre+'</div>'+
+
+'<div class="detalle">'+
+
+'Estado: '+estado+'<br>'+
+
+'Inicio: '+inicio+'<br>'+
+
+'Inicio Almuerzo: '+inicioAlmuerzo+'<br>'+
+
+'Fin Almuerzo: '+finAlmuerzo+'<br>'+
+
+'Fin Ruta: '+finRuta+
+
+'</div>';
+
+lista.appendChild(div);
 
 if(lat && lon){
 
@@ -169,140 +160,48 @@ if(!marcadores[nombre]){
 
 marcadores[nombre]=L.marker([lat,lon]).addTo(map);
 
-}else{
+}
+
+else{
 
 marcadores[nombre].setLatLng([lat,lon]);
 
 }
 
 marcadores[nombre].bindPopup(
+
 "<b>"+nombre+"</b><br>"+
+
 "Estado: "+estado+"<br>"+
-"Hora: "+hora
+
+"Inicio: "+inicio+"<br>"+
+
+"Inicio Almuerzo: "+inicioAlmuerzo+"<br>"+
+
+"Fin Almuerzo: "+finAlmuerzo+"<br>"+
+
+"Fin Ruta: "+finRuta
+
 );
 
-var pos=lat+","+lon;
-
-if(ultimaPosicion[nombre]==pos){
-
-if(!tiempoParado[nombre]) tiempoParado[nombre]=Date.now();
-
-var mins=(Date.now()-tiempoParado[nombre])/60000;
-
-if(mins>20){
-
-alerta="⚠ "+Math.floor(mins)+" min detenido";
-
-}
-
-}else{
-
-ultimaPosicion[nombre]=pos;
-tiempoParado[nombre]=Date.now();
-
-}
-
-}
-
-var card=document.createElement("div");
-
-card.className="cobrador "+estado;
-
-var alerta="";
-
-if(tiempoParado[nombre]){
-
-var mins=(Date.now()-tiempoParado[nombre])/60000;
-
-if(mins>20){
-
-alerta="<div class='alerta'>⚠ detenido "+Math.floor(mins)+" min</div>";
-
-}
-
-}
-
-card.innerHTML=
-"<b>"+nombre+"</b><br>"+
-"Estado: "+estado+"<br>"+
-"Hora: "+hora+
-alerta;
-
-if(lat && lon){
-
-card.onclick=function(lat,lon,n){
+div.onclick=function(lat,lon){
 
 return function(){
 
-map.setView([lat,lon],16);
-
-if(marcadores[n]) marcadores[n].openPopup();
-
-};
-
-}(lat,lon,nombre);
+map.setView([lat,lon],17);
 
 }
 
-lista.appendChild(card);
+}(lat,lon);
 
 }
-
-document.getElementById("activos").innerHTML=activos;
-document.getElementById("almuerzo").innerHTML=almuerzo;
-document.getElementById("singps").innerHTML=singps;
-
-});
-
-function filtrar(texto){
-
-texto=texto.toLowerCase();
-
-var cards=document.querySelectorAll(".cobrador");
-
-cards.forEach(function(c){
-
-if(c.innerText.toLowerCase().includes(texto)){
-
-c.style.display="block";
-
-}else{
-
-c.style.display="none";
 
 }
 
 });
-
-}
-
-function descargarExcel(){
-
-var csv="COBRADOR,ESTADO,HORA,LAT,LON\n";
-
-for(var n in datosGlobal){
-
-var d=datosGlobal[n];
-
-csv+=n+","+(d.estado||"")+","+(d.hora||"")+","+(d.latitud||"")+","+(d.longitud||"")+"\n";
-
-}
-
-var blob=new Blob([csv],{type:"text/csv"});
-
-var url=URL.createObjectURL(blob);
-
-var a=document.createElement("a");
-
-a.href=url;
-
-a.download="reporte_cobradores.csv";
-
-a.click();
-
-}
 
 </script>
 
 </body>
+
 </html>
