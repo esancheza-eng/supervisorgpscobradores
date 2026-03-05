@@ -1,244 +1,219 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="es">
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<meta charset="utf-8">
-<title>PANEL SUPERVISOR COBRADORES</title>
-
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<title>Control GPS de Cobradores</title>
 
 <style>
 
 body{
-font-family:Arial;
-margin:0;
+font-family: Arial;
+background:#f4f6f9;
+margin:20px;
 }
 
-#topbar{
-background:#2c3e50;
-padding:10px;
+h1{
+color:#1a73e8;
 }
 
 button{
-padding:8px 12px;
-margin:4px;
-cursor:pointer;
+padding:10px 20px;
+margin:5px;
 border:none;
-background:#3498db;
+background:#1a73e8;
+color:white;
+border-radius:5px;
+cursor:pointer;
+}
+
+button:hover{
+background:#0d47a1;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:20px;
+background:white;
+}
+
+th,td{
+padding:10px;
+border-bottom:1px solid #ddd;
+text-align:left;
+}
+
+th{
+background:#1a73e8;
 color:white;
 }
 
-#panel{
-padding:10px;
-background:#f2f2f2;
-}
-
-#map{
-height:85vh;
-}
-
-.alerta{
-color:red;
-font-weight:bold;
+iframe{
+width:100%;
+height:300px;
+border:none;
+margin-top:20px;
 }
 
 </style>
-
 </head>
 
 <body>
 
-<div id="topbar">
+<h1>📍 Panel de Supervisión de Cobradores</h1>
 
-<button onclick="verMapa()">VER MAPA</button>
+<div>
 
-<button onclick="verActivos()">COBRADORES ACTIVOS</button>
-
-<button onclick="verDetenciones()">DETENCIONES</button>
-
-<button onclick="generarReporte()">REPORTE DEL DÍA</button>
-
-<button onclick="descargarExcel()">DESCARGAR EXCEL</button>
+<button onclick="filtrarDia()">Ver Hoy</button>
+<button onclick="filtrarMes()">Ver Mes</button>
+<button onclick="filtrarAnio()">Ver Año</button>
+<button onclick="mostrarTodo()">Ver Todo</button>
 
 </div>
 
-<div id="panel">
+<table id="tabla">
 
-<div id="info"></div>
+<thead>
 
-<div id="alertas"></div>
+<tr>
 
-</div>
+<th>Cobrador</th>
+<th>Estado</th>
+<th>Inicio</th>
+<th>Fin</th>
+<th>Duración</th>
+<th>Ubicación</th>
+<th>Mapa</th>
 
-<div id="map"></div>
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr class="registro" data-fecha="2026-03-04">
+
+<td>Jefferson Quiñónez</td>
+<td>Finalizado</td>
+<td>12:14:55</td>
+<td>12:15:58</td>
+<td id="duracion1"></td>
+<td>-2.1538102 , -79.5865068</td>
+<td>
+
+<a target="_blank"
+href="https://www.google.com/maps?q=-2.1538102,-79.5865068">
+
+Ver mapa
+
+</a>
+
+</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<iframe id="mapa"
+src="https://maps.google.com/maps?q=-2.1538102,-79.5865068&z=15&output=embed">
+</iframe>
 
 <script>
 
-var firebaseConfig = {
-apiKey: "AIzaSyCW__ndth0b9jYO91QF8x6Psp7-lK1-lW4",
-authDomain: "gps-cobradores.firebaseapp.com",
-databaseURL: "https://gps-cobradores-default-rtdb.firebaseio.com",
-projectId: "gps-cobradores"
-};
+function calcularDuracion(){
 
-firebase.initializeApp(firebaseConfig);
+let inicio="12:14:55"
+let fin="12:15:58"
 
-var db = firebase.database();
+let h1=inicio.split(":")
+let h2=fin.split(":")
 
-var map = L.map('map').setView([-2.17,-79.90],12);
+let inicioSeg= (+h1[0])*3600 + (+h1[1])*60 + (+h1[2])
+let finSeg= (+h2[0])*3600 + (+h2[1])*60 + (+h2[2])
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-maxZoom:19
-}).addTo(map);
+let diferencia=finSeg-inicioSeg
 
-var marcadores = {};
+let minutos=Math.floor(diferencia/60)
+let segundos=diferencia%60
 
-var ultimaPosicion = {};
-var tiempoParado = {};
-
-var reporte = [];
-
-db.ref("cobradores").on("value",function(snapshot){
-
-var datos = snapshot.val();
-
-if(!datos)return;
-
-document.getElementById("alertas").innerHTML="";
-
-reporte=[];
-
-for(var nombre in datos){
-
-var lat = datos[nombre].latitud;
-var lon = datos[nombre].longitud;
-var estado = datos[nombre].estado;
-var hora = datos[nombre].hora;
-
-if(!lat || !lon)continue;
-
-var posicionActual = lat+","+lon;
-
-if(!marcadores[nombre]){
-
-marcadores[nombre] = L.marker([lat,lon]).addTo(map);
-
-}else{
-
-marcadores[nombre].setLatLng([lat,lon]);
+document.getElementById("duracion1").innerHTML=minutos+"m "+segundos+"s"
 
 }
 
-marcadores[nombre].bindPopup(
-"<b>"+nombre+"</b><br>"+
-"Estado: "+estado+"<br>"+
-"Hora: "+hora
-);
+calcularDuracion()
 
-if(ultimaPosicion[nombre] == posicionActual){
+function filtrarDia(){
 
-if(!tiempoParado[nombre]){
-tiempoParado[nombre] = Date.now();
-}
+let hoy=new Date().toISOString().split('T')[0]
 
-var minutos = (Date.now()-tiempoParado[nombre])/60000;
-
-if(minutos > 25){
-
-document.getElementById("alertas").innerHTML +=
-"<div class='alerta'>⚠ "+nombre+" detenido "+Math.floor(minutos)+" minutos</div>";
+filtrarFecha(hoy,"dia")
 
 }
 
-}else{
+function filtrarMes(){
 
-ultimaPosicion[nombre]=posicionActual;
-tiempoParado[nombre]=Date.now();
+let hoy=new Date()
+let mes=hoy.getMonth()+1
 
-}
-
-reporte.push({
-nombre:nombre,
-estado:estado,
-hora:hora
-});
+filtrarFecha(mes,"mes")
 
 }
 
-});
+function filtrarAnio(){
 
-function verMapa(){
+let anio=new Date().getFullYear()
 
-document.getElementById("info").innerHTML="MAPA EN TIEMPO REAL";
-
-}
-
-function verActivos(){
-
-var texto="";
-
-reporte.forEach(function(c){
-
-texto += c.nombre+" - "+c.estado+"<br>";
-
-});
-
-document.getElementById("info").innerHTML=texto;
+filtrarFecha(anio,"anio")
 
 }
 
-function verDetenciones(){
+function mostrarTodo(){
 
-document.getElementById("info").innerHTML="Revisar alertas arriba";
+let registros=document.querySelectorAll(".registro")
 
-}
+registros.forEach(r=>{
 
-function generarReporte(){
+r.style.display="table-row"
 
-var texto="";
-
-reporte.forEach(function(c){
-
-texto += c.nombre+" | "+c.estado+" | "+c.hora+"<br>";
-
-});
-
-document.getElementById("info").innerHTML=texto;
+})
 
 }
 
-function descargarExcel(){
+function filtrarFecha(valor,tipo){
 
-var csv="COBRADOR,ESTADO,HORA\n";
+let registros=document.querySelectorAll(".registro")
 
-reporte.forEach(function(c){
+registros.forEach(r=>{
 
-csv += c.nombre+","+c.estado+","+c.hora+"\n";
+let fecha=r.dataset.fecha
 
-});
+if(tipo=="dia"){
 
-var blob = new Blob([csv], {type:"text/csv"});
+r.style.display=fecha===valor?"table-row":"none"
 
-var url = window.URL.createObjectURL(blob);
+}
 
-var a = document.createElement("a");
+if(tipo=="mes"){
 
-a.href=url;
+r.style.display=fecha.includes("-"+valor+"-")?"table-row":"none"
 
-a.download="reporte_cobradores.csv";
+}
 
-a.click();
+if(tipo=="anio"){
+
+r.style.display=fecha.startsWith(valor)?"table-row":"none"
+
+}
+
+})
 
 }
 
 </script>
 
 </body>
-
 </html>
