@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 
+  
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -248,7 +249,6 @@ marcadores[nombre].bindPopup(
 function verRuta(nombre){
 
 var fecha=prompt("Ingrese fecha (YYYY-MM-DD)");
-
 if(!fecha) return;
 
 db.ref("rutas/"+nombre+"/"+fecha).once("value",function(snapshot){
@@ -256,28 +256,46 @@ db.ref("rutas/"+nombre+"/"+fecha).once("value",function(snapshot){
 var puntos=snapshot.val();
 
 if(!puntos){
-
 alert("No hay ruta registrada ese día");
-
 return;
-
 }
 
 var coordenadas=[];
 
-for(var id in puntos){
+var lista=[];
 
-coordenadas.push([
-puntos[id].latitud,
-puntos[id].longitud
-]);
+Object.keys(puntos).forEach(function(key){
+
+var p=puntos[key];
+
+if(p.latitud && p.longitud){
+
+lista.push({
+key:key,
+lat:parseFloat(p.latitud),
+lon:parseFloat(p.longitud)
+});
 
 }
 
+});
+/* ordenar por hora */
+
+lista.sort(function(a,b){
+return a.key > b.key ? 1 : -1;
+});
+
+lista.forEach(function(p){
+coordenadas.push([p.lat,p.lon]);
+});
+
+if(coordenadas.length==0){
+alert("No hay puntos GPS");
+return;
+}
+
 if(rutaMapa){
-
 map.removeLayer(rutaMapa);
-
 }
 
 rutaMapa=L.polyline(coordenadas,{
@@ -288,9 +306,7 @@ weight:5
 map.fitBounds(rutaMapa.getBounds());
 
 });
-
 }
-
 /* EXPORTAR HISTORIAL EXCEL */
 
 function exportarExcel(){
@@ -351,3 +367,4 @@ a.click();
 </body>
 
 </html>
+
