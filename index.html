@@ -1,370 +1,684 @@
 <!DOCTYPE html>
-<html>
-
-  
+<html lang="es">
 <head>
-<meta charset="utf-8">
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Supervisor GPS Cobradores</title>
-
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-
+<title>Supervisor — Panel de Control</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-
-body{
-margin:0;
-font-family:Arial;
-display:flex;
-height:100vh;
+:root {
+  --bg:#04080f;
+  --surface:#080f1c;
+  --card:#0d1624;
+  --border:#1a2840;
+  --accent:#00d4aa;
+  --blue:#2563eb;
+  --orange:#f97316;
+  --red:#ef4444;
+  --yellow:#eab308;
+  --text:#ddeeff;
+  --muted:#526070;
+  --success:#22c55e;
 }
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;}
 
-#panel{
-width:330px;
-background:#0f172a;
-color:white;
-overflow:auto;
-padding:15px;
+/* HEADER */
+.hdr{
+  background:linear-gradient(135deg,#080f1c,#060c18);
+  border-bottom:1px solid var(--border);
+  padding:12px 24px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:relative;
 }
+.hdr::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--red),transparent);opacity:0.6;}
+.hdr-left{display:flex;align-items:center;gap:12px;}
+.hdr-badge{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.35);color:var(--red);border-radius:8px;padding:4px 12px;font-size:10px;font-weight:700;letter-spacing:2px;}
+.hdr-title{font-family:'Orbitron',sans-serif;font-size:16px;letter-spacing:3px;color:var(--red);}
+.hdr-sub{font-size:10px;color:var(--muted);margin-top:2px;}
+.sync-indicator{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.3;transform:scale(0.6)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.4}}
 
-#map{
-flex:1;
+/* TOP STATS */
+.top-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--border);border-bottom:1px solid var(--border);}
+.ts{background:var(--surface);padding:14px 20px;}
+.ts-label{font-size:9px;color:var(--muted);font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;}
+.ts-value{font-family:'Orbitron',sans-serif;font-size:20px;letter-spacing:1px;}
+.ts-value.green{color:var(--accent);}
+.ts-value.red{color:var(--red);}
+.ts-value.yellow{color:var(--yellow);}
+.ts-value.blue{color:#60a5fa;}
+.ts-value.orange{color:var(--orange);}
+.ts-sub{font-size:10px;color:var(--muted);margin-top:2px;}
+
+/* MAIN GRID */
+.main{display:grid;grid-template-columns:380px 1fr;flex:1;overflow:hidden;height:calc(100vh - 130px);}
+
+/* LEFT PANEL */
+.left{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.panel-hdr{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.panel-title{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:2px;text-transform:uppercase;}
+.live-badge{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:var(--red);border-radius:6px;padding:3px 8px;font-size:9px;font-weight:700;animation:blink 1.5s infinite;}
+
+/* COBRADOR CARD */
+.cobrador-list{flex:1;overflow-y:auto;padding:12px;}
+.cobrador-list::-webkit-scrollbar{width:3px;}
+.cobrador-list::-webkit-scrollbar-thumb{background:var(--border);}
+
+.cob-card{
+  background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:16px;margin-bottom:10px;transition:all 0.2s;cursor:pointer;
 }
+.cob-card:hover{border-color:var(--blue);box-shadow:0 0 20px rgba(37,99,235,0.1);}
+.cob-card.alerta{border-color:rgba(239,68,68,0.5);background:rgba(239,68,68,0.04);animation:blink 1s infinite;}
+.cob-card.almuerzo{border-color:rgba(234,179,8,0.4);background:rgba(234,179,8,0.03);}
+.cob-card.finalizado{border-color:rgba(0,212,170,0.3);opacity:0.7;}
 
-.card{
-background:#1e293b;
-padding:12px;
-margin-bottom:10px;
-border-radius:8px;
-cursor:pointer;
-border-left:5px solid #22c55e;
+.cob-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.cob-name-wrap{display:flex;align-items:center;gap:10px;}
+.cob-avatar{width:38px;height:38px;border-radius:10px;background:rgba(37,99,235,0.2);border:1px solid rgba(37,99,235,0.4);display:flex;align-items:center;justify-content:center;font-size:18px;}
+.cob-name{font-size:14px;font-weight:700;}
+.cob-ruta{font-size:10px;color:var(--muted);margin-top:1px;}
+.cob-status{font-size:10px;font-weight:700;padding:4px 10px;border-radius:8px;border:1px solid;}
+.cob-status.en-ruta{background:rgba(0,212,170,0.1);border-color:rgba(0,212,170,0.35);color:var(--accent);}
+.cob-status.sin-iniciar{background:rgba(82,96,112,0.15);border-color:var(--border);color:var(--muted);}
+.cob-status.alerta{background:rgba(239,68,68,0.12);border-color:rgba(239,68,68,0.4);color:var(--red);}
+.cob-status.almuerzo{background:rgba(234,179,8,0.1);border-color:rgba(234,179,8,0.35);color:var(--yellow);}
+.cob-status.finalizado{background:rgba(0,212,170,0.08);border-color:rgba(0,212,170,0.2);color:var(--accent);}
+
+.cob-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;}
+.cob-cell{background:var(--surface);border-radius:8px;padding:8px 10px;}
+.cob-cell-lbl{font-size:8px;color:var(--muted);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;}
+.cob-cell-val{font-size:12px;font-weight:700;color:var(--text);}
+.cob-cell-val.green{color:var(--accent);}
+.cob-cell-val.red{color:var(--red);}
+.cob-cell-val.yellow{color:var(--yellow);}
+
+.cob-gps{display:flex;align-items:center;gap:6px;background:rgba(34,197,94,0.07);border:1px solid rgba(34,197,94,0.2);border-radius:8px;padding:7px 10px;font-size:10px;color:var(--success);font-weight:500;}
+.cob-gps.no-gps{background:rgba(82,96,112,0.1);border-color:var(--border);color:var(--muted);}
+
+.cob-progress{margin-top:10px;}
+.cob-prog-top{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:4px;}
+.cob-prog-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden;}
+.cob-prog-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--blue),var(--accent));transition:width 0.5s;}
+
+.cob-alert-banner{display:flex;align-items:center;gap:8px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.35);border-radius:8px;padding:8px 12px;margin-top:10px;font-size:11px;font-weight:600;color:var(--red);}
+
+/* EVENT LOG */
+.event-log{border-top:1px solid var(--border);}
+.log-hdr{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.log-body{max-height:220px;overflow-y:auto;padding:10px 14px;}
+.log-body::-webkit-scrollbar{width:3px;}
+.log-body::-webkit-scrollbar-thumb{background:var(--border);}
+
+.log-item{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid rgba(26,40,64,0.5);}
+.log-item:last-child{border-bottom:none;}
+.log-time{font-size:10px;color:var(--muted);font-family:'Orbitron',sans-serif;letter-spacing:1px;white-space:nowrap;padding-top:1px;}
+.log-ico{font-size:14px;flex-shrink:0;}
+.log-text{font-size:11px;line-height:1.5;}
+.log-sub{font-size:9px;color:var(--muted);}
+
+/* RIGHT PANEL (map) */
+.right{display:flex;flex-direction:column;overflow:hidden;}
+.map-hdr{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;background:var(--surface);}
+.map-hdr-info{font-size:12px;color:var(--muted);}
+
+#supMap{flex:1;width:100%;min-height:0;}
+.demo-map-sup{flex:1;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 50%,rgba(37,99,235,0.04),transparent 70%);position:relative;min-height:0;}
+.grid-sup{position:absolute;inset:0;background-image:linear-gradient(rgba(26,40,64,0.3) 1px,transparent 1px),linear-gradient(90deg,rgba(26,40,64,0.3) 1px,transparent 1px);background-size:40px 40px;}
+#supSvg{position:absolute;inset:0;width:100%;height:100%;}
+.sup-legend{position:absolute;bottom:16px;right:16px;background:rgba(8,15,28,0.9);border:1px solid var(--border);border-radius:12px;padding:14px 16px;font-size:11px;}
+.sup-legend-title{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:10px;}
+.leg-item{display:flex;align-items:center;gap:8px;margin-bottom:6px;color:var(--muted);}
+.leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.api-notice{background:rgba(8,15,28,0.92);border:1px solid var(--border);border-radius:16px;padding:22px 24px;text-align:center;max-width:340px;position:relative;z-index:2;}
+.api-notice h3{font-family:'Orbitron',sans-serif;font-size:14px;color:var(--accent);letter-spacing:2px;margin-bottom:8px;}
+.api-notice p{font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:14px;}
+.api-row{display:flex;gap:8px;}
+.api-input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:'Sora',sans-serif;font-size:11px;outline:none;}
+.api-input:focus{border-color:var(--accent);}
+.btn{border:none;border-radius:10px;padding:10px 14px;font-family:'Sora',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:5px;}
+.btn-green{background:linear-gradient(135deg,#00d4aa,#00b89a);color:#020f0a;}
+
+/* ALERT TOAST */
+.alert-toast{
+  position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999;
+  background:rgba(239,68,68,0.12);border:2px solid rgba(239,68,68,0.6);
+  border-radius:14px;padding:16px 24px;font-size:13px;font-weight:700;
+  color:var(--red);display:flex;align-items:center;gap:12px;
+  box-shadow:0 8px 30px rgba(239,68,68,0.3);
+  animation:slideDown 0.4s ease;max-width:500px;width:90%;
+  display:none;
 }
+.alert-toast.show{display:flex;}
+@keyframes slideDown{from{opacity:0;transform:translateX(-50%) translateY(-20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 
-.card.almuerzo{
-border-left:5px solid orange;
+@media(max-width:900px){
+  .main{grid-template-columns:1fr;}
+  .top-stats{grid-template-columns:repeat(3,1fr);}
+  .right{display:none;}
 }
-
-.card.finalizado{
-border-left:5px solid red;
-}
-
-.nombre{
-font-weight:bold;
-font-size:15px;
-margin-bottom:6px;
-}
-
-.detalle{
-font-size:13px;
-line-height:1.4;
-}
-
-button{
-margin-top:8px;
-padding:6px 10px;
-border:none;
-border-radius:4px;
-cursor:pointer;
-background:#2563eb;
-color:white;
-}
-
-button:hover{
-background:#1d4ed8;
-}
-
 </style>
-
 </head>
-
 <body>
 
-<div id="panel">
-
-<h2>COBRADORES</h2>
-
-<button onclick="exportarExcel()">DESCARGAR HISTORIAL EXCEL</button>
-
-<div id="lista"></div>
-
+<!-- ALERT TOAST -->
+<div class="alert-toast" id="alertToast">
+  <span style="font-size:22px;">🚨</span>
+  <div>
+    <div id="alertToastTitle">ALERTA</div>
+    <div style="font-size:11px;font-weight:400;color:#fca5a5;margin-top:2px;" id="alertToastBody"></div>
+  </div>
+  <button class="btn" style="background:rgba(239,68,68,0.2);color:var(--red);border:1px solid rgba(239,68,68,0.4);margin-left:auto;padding:6px 12px;font-size:11px;" onclick="closeAlertToast()">✕</button>
 </div>
 
-<div id="map"></div>
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-left">
+    <div class="hdr-badge">SUPERVISOR</div>
+    <div>
+      <div class="hdr-title">PANEL DE CONTROL</div>
+      <div class="hdr-sub">Monitoreo en tiempo real — Cobradores en ruta</div>
+    </div>
+  </div>
+  <div class="sync-indicator">
+    <div class="sync-dot"></div>
+    <span>Actualizando cada 2s</span>
+    <span style="color:var(--text);margin-left:8px;font-family:'Orbitron',sans-serif;font-size:13px;" id="supClock">--:--:--</span>
+  </div>
+</div>
+
+<!-- TOP STATS -->
+<div class="top-stats">
+  <div class="ts">
+    <div class="ts-label">Cobradores Activos</div>
+    <div class="ts-value green" id="tsActivos">0</div>
+    <div class="ts-sub">En ruta ahora</div>
+  </div>
+  <div class="ts">
+    <div class="ts-label">Paradas Completadas</div>
+    <div class="ts-value blue" id="tsParadas">0</div>
+    <div class="ts-sub">Total del día</div>
+  </div>
+  <div class="ts">
+    <div class="ts-label">Clientes Marcados</div>
+    <div class="ts-value green" id="tsClientes">0</div>
+    <div class="ts-sub">Puntos GPS</div>
+  </div>
+  <div class="ts">
+    <div class="ts-label">En Almuerzo</div>
+    <div class="ts-value yellow" id="tsAlmuerzo">0</div>
+    <div class="ts-sub">Pausados</div>
+  </div>
+  <div class="ts">
+    <div class="ts-label">Alertas Activas</div>
+    <div class="ts-value red" id="tsAlertas">0</div>
+    <div class="ts-sub">+15 min parados</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <!-- LEFT -->
+  <div class="left">
+    <div class="panel-hdr">
+      <div class="panel-title">Cobradores</div>
+      <div class="live-badge">● LIVE</div>
+    </div>
+    <div class="cobrador-list" id="cobradorList">
+      <div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px;">
+        <div style="font-size:36px;margin-bottom:12px;">📡</div>
+        Esperando datos del cobrador...<br>
+        <span style="font-size:11px;margin-top:8px;display:block;">Abre la app del cobrador en otra pestaña</span>
+      </div>
+    </div>
+    <div class="event-log">
+      <div class="log-hdr">
+        <div class="panel-title">Registro de Eventos</div>
+        <span style="font-size:10px;color:var(--muted);" id="logCount">0 eventos</span>
+      </div>
+      <div class="log-body" id="eventLog">
+        <div style="font-size:11px;color:var(--muted);text-align:center;padding:20px;">Sin eventos aún</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT MAP -->
+  <div class="right">
+    <div class="map-hdr">
+      <div style="font-size:16px;">🗺</div>
+      <div class="map-hdr-info">Mapa en vivo — Posiciones GPS de cobradores</div>
+      <div style="margin-left:auto;font-size:11px;color:var(--muted);" id="lastUpdate">Esperando...</div>
+    </div>
+    <div class="demo-map-sup" id="mapArea">
+      <div class="grid-sup"></div>
+      <svg id="supSvg" viewBox="0 0 900 520" preserveAspectRatio="xMidYMid meet">
+        <polyline id="routeLineSup" points="" stroke="#1a2840" stroke-width="3" fill="none" stroke-dasharray="8,5"/>
+        <polyline id="doneLineSup" points="" stroke="#00d4aa" stroke-width="3" fill="none" opacity="0.7"/>
+        <g id="supMarkers"></g>
+        <g id="supClientMarkers"></g>
+        <g id="supLivePos"></g>
+      </svg>
+
+      <div class="api-notice" id="apiNotice">
+        <h3>📡 GOOGLE MAPS</h3>
+        <p>Ingresa tu API Key para ver el mapa real con posiciones GPS en vivo de todos los cobradores.</p>
+        <div class="api-row">
+          <input class="api-input" id="apiKeyInput" placeholder="AIzaSy..." type="password">
+          <button class="btn btn-green" style="padding:9px 12px;flex-shrink:0;" onclick="loadGMaps()">▶</button>
+        </div>
+        <div style="margin-top:8px;font-size:10px;color:var(--muted);">Modo demo activo hasta ingresar clave</div>
+      </div>
+
+      <div class="sup-legend">
+        <div class="sup-legend-title">Leyenda</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#00d4aa;"></div>Parada completada</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#2563eb;box-shadow:0 0 6px #2563eb;"></div>Parada actual</div>
+        <div class="leg-item"><div class="leg-dot" style="background:rgba(100,116,139,0.5);border:1px solid #526070;"></div>Pendiente</div>
+        <div class="leg-item"><div class="leg-dot" style="background:rgba(37,99,235,0.6);border:1px solid #60a5fa;"></div>📍 Cliente marcado</div>
+        <div class="leg-item"><div class="leg-dot" style="background:var(--red);box-shadow:0 0 6px var(--red);"></div>🚨 Alerta 15min</div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
+const PARADAS=[
+  {name:"Terminal Norte",lat:-2.1482,lng:-79.8843,hora:"06:00",icon:"🏠"},
+  {name:"Av. Quito / Urdesa",lat:-2.1560,lng:-79.9010,hora:"06:15",icon:"🏬"},
+  {name:"Mall del Sol",lat:-2.1460,lng:-79.8900,hora:"06:28",icon:"🏢"},
+  {name:"Samborondón Centro",lat:-2.1200,lng:-79.8750,hora:"06:42",icon:"🏘"},
+  {name:"Av. Las Aguas",lat:-2.1300,lng:-79.8820,hora:"06:55",icon:"🌊"},
+  {name:"Cdla. La Chala",lat:-2.1650,lng:-79.9120,hora:"07:10",icon:"🏡"},
+  {name:"Mercado Caraguay",lat:-2.1720,lng:-79.9050,hora:"07:22",icon:"🛒"},
+  {name:"Kennedy Norte",lat:-2.1790,lng:-79.9200,hora:"07:35",icon:"🏙"},
+  {name:"Hospital Clínica",lat:-2.1850,lng:-79.9150,hora:"07:48",icon:"🏥"},
+  {name:"Terminal Sur",lat:-2.1960,lng:-79.9300,hora:"08:00",icon:"🏁"},
+];
 
-/* FIREBASE */
+const COBRADORES_IDS = ['cobrador_01']; // Agrega más IDs aquí
+let lastAlertState = {};
+let googleMapObj = null;
+let gMarkersSup = [], gLiveMarkers = {};
 
-var firebaseConfig = {
+// ===================================================
+// INIT
+// ===================================================
+function init() {
+  startClock();
+  drawDemoRoute();
+  setInterval(syncData, 2000);
+  syncData();
+}
 
-apiKey: "AIzaSyCW__ndth0b9jYO91QF8x6Psp7-lK1-lW4",
-authDomain: "gps-cobradores.firebaseapp.com",
-databaseURL: "https://gps-cobradores-default-rtdb.firebaseio.com",
-projectId: "gps-cobradores"
+function startClock() {
+  const upd=()=>{
+    document.getElementById('supClock').textContent=new Date().toLocaleTimeString('es-EC');
+  };
+  upd(); setInterval(upd,1000);
+}
 
+// ===================================================
+// SYNC DATA FROM localStorage
+// ===================================================
+function syncData() {
+  let totalActivos=0, totalParadas=0, totalClientes=0, totalAlmuerzo=0, totalAlertas=0;
+  const allEventos=[];
+  const cobData=[];
+
+  COBRADORES_IDS.forEach(id=>{
+    try {
+      const raw=localStorage.getItem(`tracker_${id}`);
+      if(!raw) return;
+      const d=JSON.parse(raw);
+      cobData.push(d);
+
+      if(d.rutaIniciada && !d.rutaFinalizada) totalActivos++;
+      totalParadas += d.estadoParadas?.filter(s=>s==='done').length || 0;
+      totalClientes += d.gpsClientes?.length || 0;
+      if(d.enAlmuerzo) totalAlmuerzo++;
+      if(d.alertaActiva) totalAlertas++;
+
+      // Check alert
+      if(d.alertaActiva && !lastAlertState[id]) {
+        lastAlertState[id]=true;
+        showAlertToast(`🚨 ${d.nombre} — ALERTA 15 MIN`, `Cobrador parado en "${d.paradaNombre}" por más de 15 minutos`);
+      } else if(!d.alertaActiva) {
+        lastAlertState[id]=false;
+      }
+
+      // Events
+      if(d.eventos) allEventos.push(...d.eventos.map(e=>({...e,cobNombre:d.nombre,rutaNum:d.ruta})));
+    } catch(e){}
+  });
+
+  document.getElementById('tsActivos').textContent=totalActivos;
+  document.getElementById('tsParadas').textContent=totalParadas;
+  document.getElementById('tsClientes').textContent=totalClientes;
+  document.getElementById('tsAlmuerzo').textContent=totalAlmuerzo;
+  document.getElementById('tsAlertas').textContent=totalAlertas;
+
+  renderCobradores(cobData);
+  renderEventLog(allEventos);
+  updateMapData(cobData);
+
+  const now=new Date().toLocaleTimeString('es-EC');
+  document.getElementById('lastUpdate').textContent=`Actualizado: ${now}`;
+}
+
+// ===================================================
+// RENDER COBRADOR CARDS
+// ===================================================
+function renderCobradores(data) {
+  if(!data.length){
+    document.getElementById('cobradorList').innerHTML=`
+      <div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px;">
+        <div style="font-size:36px;margin-bottom:12px;">📡</div>
+        Esperando datos del cobrador...<br>
+        <span style="font-size:11px;margin-top:8px;display:block;">Abre la app del cobrador en otra pestaña</span>
+      </div>`;
+    return;
+  }
+
+  const html=data.map(d=>{
+    const done=d.estadoParadas?.filter(s=>s==='done').length||0;
+    const pct=Math.round((done/PARADAS.length)*100);
+    const tiempoPar=d.tiempoParado||0;
+    const tiempoMin=Math.floor(tiempoPar/60);
+    const tiempoStr=`${String(Math.floor(tiempoPar/60)).padStart(2,'0')}:${String(tiempoPar%60).padStart(2,'0')}`;
+
+    // Status
+    let statusCls='sin-iniciar', statusTxt='SIN INICIAR';
+    if(d.rutaFinalizada){statusCls='finalizado';statusTxt='FINALIZADO';}
+    else if(d.alertaActiva){statusCls='alerta';statusTxt='⚠ ALERTA';}
+    else if(d.enAlmuerzo){statusCls='almuerzo';statusTxt='🍽 ALMUERZO';}
+    else if(d.rutaIniciada){statusCls='en-ruta';statusTxt='EN RUTA';}
+
+    let cardCls='';
+    if(d.alertaActiva) cardCls='alerta';
+    else if(d.enAlmuerzo) cardCls='almuerzo';
+    else if(d.rutaFinalizada) cardCls='finalizado';
+
+    const gpsHtml=d.posActual
+      ?`<div class="cob-gps">📍 ${d.posActual.lat.toFixed(5)}, ${d.posActual.lng.toFixed(5)} &nbsp;|&nbsp; ±${d.posActual.acc}m</div>`
+      :`<div class="cob-gps no-gps">📍 GPS no disponible</div>`;
+
+    const alertaBanner=d.alertaActiva
+      ?`<div class="cob-alert-banner">🚨 ¡COBRADOR PARADO MÁS DE 15 MINUTOS! — Notificar de inmediato</div>`:''
+
+    return `
+      <div class="cob-card ${cardCls}">
+        <div class="cob-top">
+          <div class="cob-name-wrap">
+            <div class="cob-avatar">🧑</div>
+            <div>
+              <div class="cob-name">${d.nombre}</div>
+              <div class="cob-ruta">Ruta #${d.ruta}</div>
+            </div>
+          </div>
+          <div class="cob-status ${statusCls}">${statusTxt}</div>
+        </div>
+        <div class="cob-grid">
+          <div class="cob-cell">
+            <div class="cob-cell-lbl">Inicio Ruta</div>
+            <div class="cob-cell-val ${d.horaInicioRuta?'green':''}">${d.horaInicioRuta||'--:--'}</div>
+          </div>
+          <div class="cob-cell">
+            <div class="cob-cell-lbl">Almuerzo</div>
+            <div class="cob-cell-val ${d.horaInicioAlmuerzo?'yellow':''}">${d.horaInicioAlmuerzo||'--:--'}${d.horaFinAlmuerzo?' → '+d.horaFinAlmuerzo:d.enAlmuerzo?' (activo)':''}</div>
+          </div>
+          <div class="cob-cell">
+            <div class="cob-cell-lbl">Fin Ruta</div>
+            <div class="cob-cell-val">${d.horaFinRuta||'--:--'}</div>
+          </div>
+          <div class="cob-cell">
+            <div class="cob-cell-lbl">Parada Actual</div>
+            <div class="cob-cell-val" style="font-size:10px;">${d.paradaNombre||'—'}</div>
+          </div>
+          <div class="cob-cell">
+            <div class="cob-cell-lbl">Clientes GPS</div>
+            <div class="cob-cell-val green">${d.gpsClientes?.length||0}</div>
+          </div>
+          <div class="cob-cell">
+            <div class="cob-cell-lbl">Tiempo Parado</div>
+            <div class="cob-cell-val ${tiempoMin>=15?'red':tiempoMin>=10?'yellow':''}">${d.rutaIniciada&&!d.rutaFinalizada?tiempoStr:'--:--'}</div>
+          </div>
+        </div>
+        ${gpsHtml}
+        <div class="cob-progress">
+          <div class="cob-prog-top"><span>${done}/${PARADAS.length} paradas</span><span>${pct}%</span></div>
+          <div class="cob-prog-bar"><div class="cob-prog-fill" style="width:${pct}%"></div></div>
+        </div>
+        ${alertaBanner}
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('cobradorList').innerHTML=html;
+}
+
+// ===================================================
+// EVENT LOG
+// ===================================================
+const EVENT_ICONS={
+  INICIO_RUTA:'🚀',FIN_RUTA:'🏁',LLEGADA:'✅',SALTADA:'⏭',
+  CLIENTE_MARCADO:'📍',INICIO_ALMUERZO:'🍽',FIN_ALMUERZO:'✅',
+  ALERTA_15MIN:'🚨'
+};
+const EVENT_COLORS={
+  INICIO_RUTA:'var(--accent)',FIN_RUTA:'var(--accent)',LLEGADA:'var(--success)',
+  SALTADA:'var(--orange)',CLIENTE_MARCADO:'#60a5fa',INICIO_ALMUERZO:'var(--yellow)',
+  FIN_ALMUERZO:'var(--yellow)',ALERTA_15MIN:'var(--red)'
 };
 
-firebase.initializeApp(firebaseConfig);
+function renderEventLog(eventos) {
+  eventos.sort((a,b)=>b.ts-a.ts);
+  const top=eventos.slice(0,50);
+  document.getElementById('logCount').textContent=`${eventos.length} eventos`;
 
-var db = firebase.database();
+  if(!top.length){
+    document.getElementById('eventLog').innerHTML=`<div style="font-size:11px;color:var(--muted);text-align:center;padding:16px;">Sin eventos aún</div>`;
+    return;
+  }
 
-/* MAPA */
+  document.getElementById('eventLog').innerHTML=top.map(e=>{
+    const ico=EVENT_ICONS[e.evento]||'📋';
+    const col=EVENT_COLORS[e.evento]||'var(--muted)';
+    let txt='', sub='';
 
-var map = L.map('map').setView([-2.17,-79.90],13);
+    switch(e.evento){
+      case 'INICIO_RUTA': txt=`<b>${e.cobNombre}</b> inició la ruta #${e.rutaNum}`; sub=`Hora: ${e.hora}`; break;
+      case 'FIN_RUTA': txt=`<b>${e.cobNombre}</b> finalizó el recorrido`; sub=`Hora: ${e.hora}`; break;
+      case 'LLEGADA': txt=`Llegada a <b>${e.nombre}</b>`; sub=`${e.cobNombre} — ${e.hora}${e.gps?` | GPS: ${e.gps.lat?.toFixed(4)},${e.gps.lng?.toFixed(4)}`:''}`;break;
+      case 'SALTADA': txt=`Parada <b>${e.nombre}</b> saltada`; sub=e.cobNombre; break;
+      case 'CLIENTE_MARCADO': txt=`📍 Cliente #${e.punto?.idx} marcado en <b>${e.punto?.paradaNombre}</b>`; sub=`${e.cobNombre} — ${e.punto?.hora}${e.punto?.lat?` | ${e.punto.lat.toFixed(4)},${e.punto.lng.toFixed(4)}`:''}`;break;
+      case 'INICIO_ALMUERZO': txt=`<b>${e.cobNombre}</b> inició almuerzo`; sub=`Hora: ${e.hora}`; break;
+      case 'FIN_ALMUERZO': txt=`<b>${e.cobNombre}</b> finalizó almuerzo`; sub=`Hora: ${e.hora}`; break;
+      case 'ALERTA_15MIN': txt=`🚨 <b>ALERTA:</b> ${e.cobNombre} lleva ${e.tiempoMin} min parado`; sub=`Parada: ${PARADAS[e.parada]?.name||'?'}`; break;
+      default: txt=e.evento; sub=e.cobNombre;
+    }
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-maxZoom:19
-}).addTo(map);
-
-var marcadores={};
-var rutaMapa=null;
-
-/* LISTAR COBRADORES */
-
-db.ref("cobradores").on("value",function(snapshot){
-
-var datos=snapshot.val();
-
-var lista=document.getElementById("lista");
-
-lista.innerHTML="";
-
-for(var nombre in datos){
-
-var d=datos[nombre];
-
-var estado=d.estado || "-";
-
-var lat=d.latitud;
-var lon=d.longitud;
-
-var inicio=d.hora_inicio || "-";
-var inicioAlmuerzo=d.hora_inicio_almuerzo || "-";
-var finAlmuerzo=d.hora_fin_almuerzo || "-";
-var finRuta=d.hora_fin_ruta || "-";
-
-var clase="card";
-
-if(estado=="almuerzo") clase="card almuerzo";
-
-if(estado=="finalizado") clase="card finalizado";
-
-var div=document.createElement("div");
-
-div.className=clase;
-
-div.innerHTML=
-
-'<div class="nombre">'+nombre+'</div>'+
-
-'<div class="detalle">'+
-'Estado: '+estado+'<br>'+
-'Inicio: '+inicio+'<br>'+
-'Inicio Almuerzo: '+inicioAlmuerzo+'<br>'+
-'Fin Almuerzo: '+finAlmuerzo+'<br>'+
-'Fin Ruta: '+finRuta+
-'</div>';
-
-/* BOTON VER RUTA */
-
-if(estado=="finalizado"){
-
-var btn=document.createElement("button");
-
-btn.innerHTML="VER RUTA";
-
-btn.onclick=(function(n){
-
-return function(){
-
-verRuta(n);
-
+    return `<div class="log-item">
+      <div class="log-time">${e.hora||'--:--'}</div>
+      <div class="log-ico">${ico}</div>
+      <div><div class="log-text" style="color:${col}">${txt}</div><div class="log-sub">${sub}</div></div>
+    </div>`;
+  }).join('');
 }
 
-})(nombre);
+// ===================================================
+// DEMO MAP UPDATE
+// ===================================================
+function drawDemoRoute() {
+  const W=900,H=520,pad=80;
+  const lats=PARADAS.map(p=>p.lat),lngs=PARADAS.map(p=>p.lng);
+  const minLat=Math.min(...lats),maxLat=Math.max(...lats);
+  const minLng=Math.min(...lngs),maxLng=Math.max(...lngs);
+  const toX=lng=>pad+((lng-minLng)/(maxLng-minLng||1))*(W-pad*2);
+  const toY=lat=>(H-pad)-((lat-minLat)/(maxLat-minLat||1))*(H-pad*2);
 
-div.appendChild(btn);
+  const pts=PARADAS.map(p=>`${toX(p.lng)},${toY(p.lat)}`).join(' ');
+  document.getElementById('routeLineSup').setAttribute('points',pts);
 
+  const g=document.getElementById('supMarkers');
+  PARADAS.forEach((p,i)=>{
+    const x=toX(p.lng),y=toY(p.lat);
+    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx',x);c.setAttribute('cy',y);
+    c.setAttribute('r',i===0||i===PARADAS.length-1?14:9);
+    c.setAttribute('fill','#0d1624');c.setAttribute('stroke','#1a2840');c.setAttribute('stroke-width','2');
+    c.setAttribute('data-sup-idx',i);
+    g.appendChild(c);
+
+    const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',x);t.setAttribute('y',y+4);
+    t.setAttribute('text-anchor','middle');t.setAttribute('font-size','10');
+    t.textContent=p.icon;
+    g.appendChild(t);
+
+    const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl.setAttribute('x',x);lbl.setAttribute('y',y-17);
+    lbl.setAttribute('text-anchor','middle');lbl.setAttribute('font-size','8');
+    lbl.setAttribute('fill','#526070');
+    lbl.textContent=p.name.split(' ').slice(0,2).join(' ');
+    g.appendChild(lbl);
+  });
 }
 
-lista.appendChild(div);
+function updateMapData(data) {
+  if(!data.length) return;
+  const d=data[0]; // first cobrador
+  const W=900,H=520,pad=80;
+  const lats=PARADAS.map(p=>p.lat),lngs=PARADAS.map(p=>p.lng);
+  const minLat=Math.min(...lats),maxLat=Math.max(...lats);
+  const minLng=Math.min(...lngs),maxLng=Math.max(...lngs);
+  const toX=lng=>pad+((lng-minLng)/(maxLng-minLng||1))*(W-pad*2);
+  const toY=lat=>(H-pad)-((lat-minLat)/(maxLat-minLat||1))*(H-pad*2);
 
-/* CLICK EN TARJETA CENTRA MAPA */
+  // Update stop colors
+  document.querySelectorAll('[data-sup-idx]').forEach(c=>{
+    const i=parseInt(c.getAttribute('data-sup-idx'));
+    const st=d.estadoParadas?.[i]||'pending';
+    if(st==='done'){c.setAttribute('fill','rgba(0,212,170,0.2)');c.setAttribute('stroke','#00d4aa');}
+    else if(st==='current'){c.setAttribute('fill','rgba(37,99,235,0.3)');c.setAttribute('stroke','#2563eb');c.setAttribute('stroke-width','3');}
+    else if(st==='skip'){c.setAttribute('fill','rgba(239,68,68,0.12)');c.setAttribute('stroke','#ef4444');}
+    else{c.setAttribute('fill','#0d1624');c.setAttribute('stroke','#1a2840');c.setAttribute('stroke-width','2');}
+  });
 
-if(lat && lon){
+  // Done polyline
+  const doneIdx=d.estadoParadas?.lastIndexOf('done')??-1;
+  if(doneIdx>=0){
+    const donePts=PARADAS.slice(0,doneIdx+2).map(p=>`${toX(p.lng)},${toY(p.lat)}`).join(' ');
+    document.getElementById('doneLineSup').setAttribute('points',donePts);
+  }
 
-div.onclick=(function(lat,lon){
+  // Live position
+  const liveG=document.getElementById('supLivePos');
+  liveG.innerHTML='';
+  if(d.posActual) {
+    const lx=toX(d.posActual.lng), ly=toY(d.posActual.lat);
+    // Pulse ring
+    const ring=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    ring.setAttribute('cx',lx);ring.setAttribute('cy',ly);ring.setAttribute('r','18');
+    ring.setAttribute('fill','none');ring.setAttribute('stroke',d.alertaActiva?'#ef4444':'#2563eb');
+    ring.setAttribute('stroke-width','2');ring.setAttribute('opacity','0.5');
+    liveG.appendChild(ring);
 
-return function(){
+    const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx',lx);dot.setAttribute('cy',ly);dot.setAttribute('r','8');
+    dot.setAttribute('fill',d.alertaActiva?'rgba(239,68,68,0.8)':'rgba(37,99,235,0.9)');
+    dot.setAttribute('stroke','white');dot.setAttribute('stroke-width','2');
+    liveG.appendChild(dot);
 
-map.setView([lat,lon],17);
+    const lt=document.createElementNS('http://www.w3.org/2000/svg','text');
+    lt.setAttribute('x',lx);lt.setAttribute('y',ly-22);
+    lt.setAttribute('text-anchor','middle');lt.setAttribute('font-size','9');
+    lt.setAttribute('fill',d.alertaActiva?'#ef4444':'#60a5fa');lt.setAttribute('font-weight','bold');
+    lt.textContent=`🧑 ${d.nombre}`;
+    liveG.appendChild(lt);
+  } else {
+    // Show at current stop
+    const cur=PARADAS[d.paradaActual];
+    if(cur){
+      const px=toX(cur.lng),py=toY(cur.lat);
+      const ring=document.createElementNS('http://www.w3.org/2000/svg','circle');
+      ring.setAttribute('cx',px);ring.setAttribute('cy',py);ring.setAttribute('r','20');
+      ring.setAttribute('fill','none');ring.setAttribute('stroke',d.alertaActiva?'#ef4444':'#2563eb');
+      ring.setAttribute('stroke-width','2');ring.setAttribute('opacity','0.6');
+      liveG.appendChild(ring);
+    }
+  }
 
+  // Client GPS points
+  const clientG=document.getElementById('supClientMarkers');
+  clientG.innerHTML='';
+  (d.gpsClientes||[]).forEach(pt=>{
+    if(!pt.lat) {
+      // Near stop with offset
+      const base=PARADAS[pt.parada];
+      if(!base) return;
+      const ox=(Math.random()-0.5)*0.003, oy=(Math.random()-0.5)*0.002;
+      const cx=toX(base.lng+ox), cy=toY(base.lat+oy);
+      const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+      c.setAttribute('cx',cx);c.setAttribute('cy',cy);c.setAttribute('r','5');
+      c.setAttribute('fill','rgba(37,99,235,0.5)');c.setAttribute('stroke','#60a5fa');c.setAttribute('stroke-width','1');
+      clientG.appendChild(c);
+      return;
+    }
+    const cx=toX(pt.lng),cy=toY(pt.lat);
+    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx',cx);c.setAttribute('cy',cy);c.setAttribute('r','5');
+    c.setAttribute('fill','rgba(37,99,235,0.6)');c.setAttribute('stroke','#60a5fa');c.setAttribute('stroke-width','1.5');
+    clientG.appendChild(c);
+  });
 }
 
-})(lat,lon);
-
+// ===================================================
+// GOOGLE MAPS SUPERVISOR
+// ===================================================
+function loadGMaps(){
+  const key=document.getElementById('apiKeyInput').value.trim();
+  if(!key){return;}
+  const s=document.createElement('script');
+  s.src=`https://maps.googleapis.com/maps/api/js?key=${key}&callback=initSupGMaps`;
+  s.async=true;
+  document.head.appendChild(s);
 }
+window.initSupGMaps=function(){
+  document.getElementById('apiNotice').style.display='none';
+  document.getElementById('supSvg').style.display='none';
+  document.querySelector('.grid-sup').style.display='none';
+  googleMapObj=new google.maps.Map(document.getElementById('mapArea'),{
+    center:{lat:-2.155,lng:-79.91},zoom:13,
+    styles:[
+      {elementType:'geometry',stylers:[{color:'#04080f'}]},
+      {elementType:'labels.text.fill',stylers:[{color:'#526070'}]},
+      {featureType:'road',elementType:'geometry',stylers:[{color:'#080f1c'}]},
+      {featureType:'road',elementType:'geometry.stroke',stylers:[{color:'#1a2840'}]},
+      {featureType:'water',elementType:'geometry',stylers:[{color:'#020609'}]},
+    ],
+    disableDefaultUI:false,zoomControl:true,mapTypeControl:false
+  });
+};
 
-/* MARCADOR MAPA */
-
-if(lat && lon){
-
-if(!marcadores[nombre]){
-
-marcadores[nombre]=L.marker([lat,lon]).addTo(map);
-
+// ===================================================
+// ALERT TOAST
+// ===================================================
+let alertToastTimeout;
+function showAlertToast(title,body){
+  document.getElementById('alertToastTitle').textContent=title;
+  document.getElementById('alertToastBody').textContent=body;
+  document.getElementById('alertToast').classList.add('show');
+  clearTimeout(alertToastTimeout);
+  alertToastTimeout=setTimeout(()=>document.getElementById('alertToast').classList.remove('show'),8000);
+  // Sound cue (if supported)
+  try{new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAA...').play();}catch(e){}
 }
+function closeAlertToast(){document.getElementById('alertToast').classList.remove('show');}
 
-else{
-
-marcadores[nombre].setLatLng([lat,lon]);
-
-}
-
-/* POPUP DEL MARCADOR */
-
-marcadores[nombre].bindPopup(
-
-"<b>"+nombre+"</b><br>"+
-"Estado: "+estado+"<br>"+
-"Inicio: "+inicio+"<br>"+
-"Inicio Almuerzo: "+inicioAlmuerzo+"<br>"+
-"Fin Almuerzo: "+finAlmuerzo+"<br>"+
-"Fin Ruta: "+finRuta
-
-);
-
-}
-
-}
-
-});
-
-/* VER RUTA DEL DIA */
-
-function verRuta(nombre){
-
-var fecha=prompt("Ingrese fecha (YYYY-MM-DD)");
-if(!fecha) return;
-
-db.ref("rutas/"+nombre+"/"+fecha).once("value",function(snapshot){
-
-var puntos=snapshot.val();
-
-if(!puntos){
-alert("No hay ruta registrada ese día");
-return;
-}
-
-var coordenadas=[];
-
-var lista=[];
-
-Object.keys(puntos).forEach(function(key){
-
-var p=puntos[key];
-
-if(p.latitud && p.longitud){
-
-lista.push({
-key:key,
-lat:parseFloat(p.latitud),
-lon:parseFloat(p.longitud)
-});
-
-}
-
-});
-/* ordenar por hora */
-
-lista.sort(function(a,b){
-return a.key > b.key ? 1 : -1;
-});
-
-lista.forEach(function(p){
-coordenadas.push([p.lat,p.lon]);
-});
-
-if(coordenadas.length==0){
-alert("No hay puntos GPS");
-return;
-}
-
-if(rutaMapa){
-map.removeLayer(rutaMapa);
-}
-
-rutaMapa=L.polyline(coordenadas,{
-color:"blue",
-weight:5
-}).addTo(map);
-
-map.fitBounds(rutaMapa.getBounds());
-
-});
-}
-/* EXPORTAR HISTORIAL EXCEL */
-
-function exportarExcel(){
-
-var csv="COBRADOR,FECHA,HORA,LATITUD,LONGITUD\n";
-
-db.ref("rutas").once("value",function(snapshot){
-
-var rutas=snapshot.val();
-
-for(var cobrador in rutas){
-
-for(var fecha in rutas[cobrador]){
-
-var puntos=rutas[cobrador][fecha];
-
-for(var id in puntos){
-
-var p=puntos[id];
-
-csv+=
-cobrador+","+
-fecha+","+
-(p.hora || "")+","+
-p.latitud+","+
-p.longitud+"\n";
-
-}
-
-}
-
-}
-
-descargarArchivo(csv);
-
-});
-
-}
-
-function descargarArchivo(contenido){
-
-var blob=new Blob([contenido],{type:"text/csv"});
-
-var url=window.URL.createObjectURL(blob);
-
-var a=document.createElement("a");
-
-a.href=url;
-
-a.download="historial_cobradores.csv";
-
-a.click();
-
-}
-
+init();
 </script>
-
 </body>
-
 </html>
-
