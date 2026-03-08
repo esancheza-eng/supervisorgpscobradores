@@ -149,8 +149,8 @@ body {
 /* Stats row */
 .stats-row {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 8px;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 6px;
   margin-bottom: 4px;
 }
 
@@ -425,6 +425,8 @@ body {
 
   <button class="nav-btn active" onclick="setView('mapa',this)">📍 Mapa en Vivo</button>
   <button class="nav-btn success" onclick="setView('activos',this)">🟢 Activos</button>
+  <button class="nav-btn" onclick="setView('almuerzo',this)" style="color:#ff9100;border-color:#3a1a00;">☕ Almuerzo</button>
+  <button class="nav-btn" onclick="setView('finalizados',this)" style="color:#ff6b6b;border-color:#3a1020;">🏁 Finalizados</button>
   <button class="nav-btn danger" onclick="setView('sin-gps',this)">🔴 Sin GPS</button>
   <button class="nav-btn" onclick="setView('detenciones',this)">⚠ Detenidos</button>
   <button class="nav-btn" onclick="descargarExcel()">📥 Excel</button>
@@ -445,13 +447,17 @@ body {
           <div class="num" id="cnt-activos">0</div>
           <div class="lbl">Activos</div>
         </div>
-        <div class="stat-box orange">
+        <div class="stat-box orange" style="cursor:pointer" onclick="setView('almuerzo', document.querySelector('.nav-btn:nth-child(3)'))">
           <div class="num" id="cnt-almuerzo">0</div>
           <div class="lbl">Almuerzo</div>
         </div>
-        <div class="stat-box red">
+        <div class="stat-box red" style="cursor:pointer" onclick="setView('sin-gps', document.querySelector('.nav-btn:nth-child(5)'))">
           <div class="num" id="cnt-sin">0</div>
           <div class="lbl">Sin GPS</div>
+        </div>
+        <div class="stat-box" style="cursor:pointer;border-color:#3a1020;" onclick="setView('finalizados', document.querySelector('.nav-btn:nth-child(4)'))">
+          <div class="num" id="cnt-finalizados" style="color:#ff6b6b;">0</div>
+          <div class="lbl">Finaliz.</div>
         </div>
       </div>
       <input id="search" type="text" placeholder="🔍  Buscar cobrador..." oninput="filtrarLista(this.value)">
@@ -470,10 +476,10 @@ body {
       <div class="legend-item"><div class="leg-dot" style="background:#3d5a7a"></div> Sin GPS</div>
       <div style="height:6px;border-top:1px solid #1a3050;margin:6px 0;"></div>
       <div class="legend-item" style="font-size:10px;color:#3d5a7a;letter-spacing:1px;">PUNTOS DE EVENTO</div>
-      <div class="legend-item"><div class="leg-dot" style="background:#00e676"></div> 🟢 Inicio Sesión</div>
-      <div class="legend-item"><div class="leg-dot" style="background:#ff9100"></div> ☕ Inicio Almuerzo</div>
-      <div class="legend-item"><div class="leg-dot" style="background:#ffd600"></div> ✅ Fin Almuerzo</div>
-      <div class="legend-item"><div class="leg-dot" style="background:#ff1744"></div> 🏁 Fin Ruta</div>
+      <div class="legend-item"><div class="leg-dot" style="background:#00e676"></div> Inicio Sesión</div>
+      <div class="legend-item"><div class="leg-dot" style="background:#ff9100"></div> Inicio Almuerzo</div>
+      <div class="legend-item"><div class="leg-dot" style="background:#ffd600"></div> Fin Almuerzo</div>
+      <div class="legend-item"><div class="leg-dot" style="background:#ff1744"></div> Fin Ruta</div>
     </div>
   </div>
 
@@ -693,7 +699,7 @@ function esCobrador(nombre) {
 }
 
 function procesarDatos() {
-  var activos = 0, almuerzo = 0, sinGPS = 0;
+  var activos = 0, almuerzo = 0, sinGPS = 0, finalizados = 0;
   var alertasHTML = '';
 
   // Limpiar marcadores viejos
@@ -717,7 +723,7 @@ function procesarDatos() {
 
     if (estado === 'trabajando') activos++;
     if (estado === 'almuerzo')   almuerzo++;
-    // Nota: finalizado NO suma a sinGPS ni activos/almuerzo (correcto)
+    if (estado === 'finalizado') finalizados++;
 
     // Marcador
     var icono = ICONOS[estado] || ICONOS.default;
@@ -758,9 +764,10 @@ function procesarDatos() {
     if (!datosCob[nb]) sinGPS++;
   });
 
-  document.getElementById('cnt-activos').textContent = activos;
-  document.getElementById('cnt-almuerzo').textContent = almuerzo;
-  document.getElementById('cnt-sin').textContent = sinGPS;
+  document.getElementById('cnt-activos').textContent   = activos;
+  document.getElementById('cnt-almuerzo').textContent  = almuerzo;
+  document.getElementById('cnt-sin').textContent       = sinGPS;
+  document.getElementById('cnt-finalizados').textContent = finalizados;
   document.getElementById('alertas-overlay').innerHTML = alertasHTML;
 
   renderLista('');
@@ -873,6 +880,56 @@ function setView(vista, btn) {
     showToast(`🟢 ${activos.length} cobradores activos`);
   }
 
+  if (vista === 'almuerzo') {
+    var enAlmuerzo = Object.keys(datosCob).filter(function(n){ return esCobrador(n) && datosCob[n].estado === 'almuerzo'; });
+    search.value = '';
+    var container = document.getElementById('cobrador-list');
+    container.innerHTML = '';
+    enAlmuerzo.forEach(function(nombre) {
+      var d  = datosCob[nombre];
+      var pt = (datosPuntos[nombre] || {});
+      var card = document.createElement('div');
+      card.className = 'cobrador-card almuerzo';
+      card.innerHTML = `
+        <div class="c-name">${nombre}</div>
+        <div class="c-meta">
+          <span class="estado-pill pill-almuerzo">☕ almuerzo</span>
+          <span class="c-hora">${d.hora || '--:--'}</span>
+        </div>
+        ${(d.fecha || d.hora) ? '<div class="c-fecha">'+(d.fecha || new Date().toLocaleDateString('es-EC'))+'</div>' : ''}
+        ${pt.almuerzo && pt.almuerzo.hora ? '<div class="c-alert" style="color:var(--orange)">☕ Salió: '+pt.almuerzo.hora+'</div>' : ''}`;
+      if (d.latitud) card.onclick = function() { map.flyTo([d.latitud, d.longitud], 16, {duration:1}); marcadores[nombre] && marcadores[nombre].openPopup(); };
+      container.appendChild(card);
+    });
+    if (!enAlmuerzo.length) container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px;letter-spacing:2px;">NADIE EN ALMUERZO</div>';
+    showToast(`☕ ${enAlmuerzo.length} en almuerzo`);
+  }
+
+  if (vista === 'finalizados') {
+    var finalizados = Object.keys(datosCob).filter(function(n){ return esCobrador(n) && datosCob[n].estado === 'finalizado'; });
+    search.value = '';
+    var container = document.getElementById('cobrador-list');
+    container.innerHTML = '';
+    finalizados.forEach(function(nombre) {
+      var d  = datosCob[nombre];
+      var pt = (datosPuntos[nombre] || {});
+      var card = document.createElement('div');
+      card.className = 'cobrador-card finalizado';
+      card.innerHTML = `
+        <div class="c-name">${nombre}</div>
+        <div class="c-meta">
+          <span class="estado-pill pill-finalizado">🏁 finalizado</span>
+          <span class="c-hora">${d.hora || '--:--'}</span>
+        </div>
+        ${(d.fecha || d.hora) ? '<div class="c-fecha">'+(d.fecha || new Date().toLocaleDateString('es-EC'))+'</div>' : ''}
+        ${pt.finalizado && pt.finalizado.hora ? '<div class="c-alert" style="color:var(--red)">🏁 Finalizó: '+pt.finalizado.hora+'</div>' : ''}`;
+      if (d.latitud) card.onclick = function() { map.flyTo([d.latitud, d.longitud], 16, {duration:1}); marcadores[nombre] && marcadores[nombre].openPopup(); };
+      container.appendChild(card);
+    });
+    if (!finalizados.length) container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px;letter-spacing:2px;">NINGUNO FINALIZADO</div>';
+    showToast(`🏁 ${finalizados.length} finalizados`);
+  }
+
   if (vista === 'sin-gps') {
     var sinGPS = COBRADORES_VALIDOS.filter(function(n){ return !datosCob[n] || !datosCob[n].latitud; });
     var container = document.getElementById('cobrador-list');
@@ -951,6 +1008,7 @@ function borrarTodosLosDatos() {
   document.getElementById('cnt-activos').textContent = '0';
   document.getElementById('cnt-almuerzo').textContent = '0';
   document.getElementById('cnt-sin').textContent = '0';
+  document.getElementById('cnt-finalizados').textContent = '0';
   document.getElementById('alertas-overlay').innerHTML = '';
   renderLista('');
   showToast('🗑 Todos los datos borrados');
@@ -958,26 +1016,44 @@ function borrarTodosLosDatos() {
 
 // ── Excel ─────────────────────────────────────────────────────────
 function descargarExcel() {
-  var BOM = '\uFEFF'; // para que Excel abra bien tildes y ñ
+  var BOM = '\uFEFF';
+  var SEP = ';'; // separador para Excel en español (Ecuador)
+
   var headers = [
     'COBRADOR',
     'ESTADO ACTUAL',
     'FECHA',
-    'HORA ÚLTIMA POSICIÓN',
-    'HORA INICIO SESIÓN',
+    'HORA ULTIMA POSICION',
+    'HORA INICIO SESION',
     'HORA INICIO ALMUERZO',
     'HORA FIN ALMUERZO',
-    'HORA FIN RUTA',
+    'HORA FIN RUTA GPS',
     'LATITUD',
     'LONGITUD'
   ];
-  var csv = BOM + headers.join(',') + '\n';
+
+  // Instrucción para Excel en español
+  var csv = BOM + 'sep=' + SEP + '\n' + headers.join(SEP) + '\n';
+
+  // Construir índices case-insensitive
+  var cobIndex = {};
+  for (var nc in datosCob) {
+    cobIndex[nc.toUpperCase()] = datosCob[nc];
+  }
+  var puntosIndex = {};
+  for (var nb in datosPuntos) {
+    puntosIndex[nb.toUpperCase()] = datosPuntos[nb];
+  }
 
   COBRADORES_VALIDOS.forEach(function(nombre) {
-    var d  = datosCob[nombre]    || {};
-    var pt = datosPuntos[nombre] || {};
+    var d  = cobIndex[nombre.toUpperCase()]    || {};
+    var pt = puntosIndex[nombre.toUpperCase()] || {};
 
     var hoy = new Date().toLocaleDateString('es-EC');
+
+    var horaFin = (pt.finalizado && pt.finalizado.hora)
+               || (d.estado === 'finalizado' ? d.hora : '')
+               || '';
 
     var fila = [
       nombre,
@@ -987,15 +1063,15 @@ function descargarExcel() {
       (pt.trabajando   && pt.trabajando.hora)   || '',
       (pt.almuerzo     && pt.almuerzo.hora)     || '',
       (pt.fin_almuerzo && pt.fin_almuerzo.hora) || '',
-      (pt.finalizado   && pt.finalizado.hora)   || '',
+      horaFin,
       d.latitud  || '',
       d.longitud || ''
     ];
 
-    // Envolver campos con comas en comillas
+    // Envolver en comillas si contiene el separador
     csv += fila.map(function(v) {
-      return String(v).indexOf(',') !== -1 ? '"' + v + '"' : v;
-    }).join(',') + '\n';
+      return String(v).indexOf(SEP) !== -1 ? '"' + v + '"' : v;
+    }).join(SEP) + '\n';
   });
 
   var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
