@@ -273,6 +273,15 @@ body {
   margin-left: auto;
 }
 
+.c-fecha {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  margin-top: 4px;
+  opacity: 0.7;
+}
+
 /* alerta detenido */
 .c-alert {
   font-size: 11px;
@@ -418,6 +427,7 @@ body {
   <button class="nav-btn danger" onclick="setView('sin-gps',this)">🔴 Sin GPS</button>
   <button class="nav-btn" onclick="setView('detenciones',this)">⚠ Detenidos</button>
   <button class="nav-btn" onclick="descargarExcel()">📥 Excel</button>
+  <button class="nav-btn danger" onclick="confirmarBorrar()" style="margin-left:auto;">🗑 Borrar Datos</button>
 
   <span id="clock-top">--:--:--</span>
 </div>
@@ -469,6 +479,40 @@ body {
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- Modal borrar datos -->
+<div id="modal-borrar" style="
+  position:fixed;inset:0;background:rgba(0,0,0,0.8);
+  backdrop-filter:blur(6px);z-index:2000;
+  display:none;align-items:center;justify-content:center;padding:20px;">
+  <div style="
+    background:#0f1928;border:1px solid #ff1744;border-radius:16px;
+    padding:30px 24px;width:100%;max-width:340px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.8);text-align:center;
+    font-family:'Rajdhani',sans-serif;">
+    <div style="font-size:44px;margin-bottom:14px;">🗑</div>
+    <div style="font-size:11px;letter-spacing:3px;color:#3d5a7a;text-transform:uppercase;margin-bottom:10px;">Confirmar acción</div>
+    <div style="font-size:20px;font-weight:700;letter-spacing:2px;color:#ff1744;margin-bottom:10px;">BORRAR TODOS LOS DATOS</div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:12px;color:#3d5a7a;margin-bottom:26px;line-height:1.6;">
+      Se eliminarán todos los registros<br>de cobradores y puntos GPS.<br>Esta acción no se puede deshacer.
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <button onclick="cerrarModalBorrar()" style="
+        height:50px;font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;
+        letter-spacing:1.5px;text-transform:uppercase;background:transparent;
+        border:1px solid #1a3050;border-radius:8px;color:#3d5a7a;cursor:pointer;">
+        ✕ Cancelar
+      </button>
+      <button onclick="borrarTodosLosDatos()" style="
+        height:50px;font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;
+        letter-spacing:1.5px;text-transform:uppercase;
+        background:linear-gradient(135deg,#880015,#ff1744);
+        border:none;border-radius:8px;color:#fff;cursor:pointer;">
+        🗑 Borrar
+      </button>
+    </div>
+  </div>
+</div>
 
 <script>
 // ── Firebase ──────────────────────────────────────────────────────
@@ -668,6 +712,7 @@ function procesarDatos() {
 
     if (estado === 'trabajando') activos++;
     if (estado === 'almuerzo')   almuerzo++;
+    // Nota: finalizado NO suma a sinGPS ni activos/almuerzo (correcto)
 
     // Marcador
     var icono = ICONOS[estado] || ICONOS.default;
@@ -681,6 +726,7 @@ function procesarDatos() {
     marcadores[nombre].bindPopup(`
       <div class="popup-name">${nombre}</div>
       <div class="popup-row">ESTADO &nbsp;<span>${estado.toUpperCase()}</span></div>
+      <div class="popup-row">FECHA &nbsp;&nbsp;<span>${d.fecha || '--'}</span></div>
       <div class="popup-row">HORA &nbsp;&nbsp;&nbsp;<span>${hora}</span></div>
       <div class="popup-row">LAT &nbsp;&nbsp;&nbsp;&nbsp;<span>${lat.toFixed(5)}</span></div>
       <div class="popup-row">LON &nbsp;&nbsp;&nbsp;&nbsp;<span>${lon.toFixed(5)}</span></div>
@@ -700,11 +746,10 @@ function procesarDatos() {
     }
   }
 
-  // Contar sin GPS (solo cobradores válidos)
-  for (var nb in datosCob) {
-    if (!esCobrador(nb)) continue;
-    if (!datosCob[nb] || !datosCob[nb].latitud) sinGPS++;
-  }
+  // Contar cobradores válidos que no tienen datos en Firebase (nunca enviaron GPS)
+  COBRADORES_VALIDOS.forEach(function(nb) {
+    if (!datosCob[nb]) sinGPS++;
+  });
 
   document.getElementById('cnt-activos').textContent = activos;
   document.getElementById('cnt-almuerzo').textContent = almuerzo;
@@ -719,20 +764,19 @@ function renderLista(filtro) {
   var container = document.getElementById('cobrador-list');
   container.innerHTML = '';
 
-  // Siempre mostrar TODOS los cobradores válidos, estén o no en Firebase
   var nombres = COBRADORES_VALIDOS.slice().sort();
 
   nombres.forEach(function(nombre) {
     if (filtro && !nombre.toLowerCase().includes(filtro.toLowerCase())) return;
 
-    var d      = datosCob[nombre] || null;
-    var estado = d ? (d.estado || 'sin-gps') : 'sin-gps';
-    var hora   = d ? (d.hora || '--:--') : '--:--';
-    var lat    = d ? d.latitud  : null;
-    var lon    = d ? d.longitud : null;
+    var d        = datosCob[nombre] || null;
+    var estado   = d ? (d.estado || 'sin-gps') : 'sin-gps';
+    var hora     = d ? (d.hora   || '--:--')   : '--:--';
+    var fecha    = d ? (d.fecha  || '')         : '';
+    var lat      = d ? d.latitud  : null;
+    var lon      = d ? d.longitud : null;
     var tieneGPS = lat && lon;
 
-    // Alerta detenido
     var alertaHTML = '';
     var pos = lat + ',' + lon;
     if (tieneGPS && ultimaPosicion[nombre] === pos && tiempoParado[nombre]) {
@@ -740,10 +784,12 @@ function renderLista(filtro) {
       if (mins > 20) alertaHTML = `<div class="c-alert">⚠ ${Math.floor(mins)} min detenido</div>`;
     }
 
-    var cls   = tieneGPS ? estado : 'sin-gps';
-    var pill  = tieneGPS
+    var cls  = tieneGPS ? estado : 'sin-gps';
+    var pill = tieneGPS
       ? `<span class="estado-pill pill-${estado}">${estado}</span>`
       : `<span class="estado-pill pill-sin-gps">sin gps</span>`;
+
+    var fechaHTML = fecha ? `<div class="c-fecha">${fecha}</div>` : '';
 
     var card = document.createElement('div');
     card.className = `cobrador-card ${cls}`;
@@ -753,6 +799,7 @@ function renderLista(filtro) {
         ${pill}
         <span class="c-hora">${hora}</span>
       </div>
+      ${fechaHTML}
       ${alertaHTML}
     `;
 
@@ -785,7 +832,6 @@ function setView(vista, btn) {
   if (vista === 'mapa') {
     search.value = '';
     renderLista('');
-    // centrar mapa en marcadores
     var lats = [], lons = [];
     for (var n in marcadores) {
       var ll = marcadores[n].getLatLng();
@@ -799,7 +845,6 @@ function setView(vista, btn) {
   if (vista === 'activos') {
     var activos = Object.keys(datosCob).filter(function(n){ return esCobrador(n) && datosCob[n].estado === 'trabajando'; });
     search.value = '';
-    // Filtra mostrando solo activos
     var container = document.getElementById('cobrador-list');
     container.innerHTML = '';
     activos.forEach(function(nombre) {
@@ -811,7 +856,8 @@ function setView(vista, btn) {
         <div class="c-meta">
           <span class="estado-pill pill-trabajando">trabajando</span>
           <span class="c-hora">${d.hora || '--:--'}</span>
-        </div>`;
+        </div>
+        ${d.fecha ? '<div class="c-fecha">'+d.fecha+'</div>' : ''}`;
       if (d.latitud) card.onclick = () => { map.flyTo([d.latitud, d.longitud], 16, {duration:1}); marcadores[nombre] && marcadores[nombre].openPopup(); };
       container.appendChild(card);
     });
@@ -820,15 +866,17 @@ function setView(vista, btn) {
   }
 
   if (vista === 'sin-gps') {
-    var sinGPS = Object.keys(datosCob).filter(function(n){ return esCobrador(n) && !datosCob[n].latitud; });
+    var sinGPS = COBRADORES_VALIDOS.filter(function(n){ return !datosCob[n] || !datosCob[n].latitud; });
     var container = document.getElementById('cobrador-list');
     container.innerHTML = '';
     sinGPS.forEach(function(nombre) {
+      var d = datosCob[nombre] || null;
       var card = document.createElement('div');
       card.className = 'cobrador-card sin-gps';
       card.innerHTML = `
         <div class="c-name">${nombre}</div>
-        <div class="c-meta"><span class="estado-pill pill-sin-gps">sin gps</span></div>`;
+        <div class="c-meta"><span class="estado-pill pill-sin-gps">sin gps</span></div>
+        ${d && d.fecha ? '<div class="c-fecha">'+d.fecha+'</div>' : ''}`;
       container.appendChild(card);
     });
     if (!sinGPS.length) container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px;letter-spacing:2px;">TODOS TIENEN GPS ✓</div>';
@@ -855,7 +903,8 @@ function setView(vista, btn) {
             <div class="c-meta">
               <span class="estado-pill pill-finalizado">⚠ detenido</span>
               <span class="c-hora">${Math.floor(mins)} min</span>
-            </div>`;
+            </div>
+            ${d.fecha ? '<div class="c-fecha">'+d.fecha+'</div>' : ''}`;
           card.onclick = () => { map.flyTo([d.latitud, d.longitud], 16, {duration:1}); };
           container.appendChild(card);
         }
@@ -866,13 +915,45 @@ function setView(vista, btn) {
   }
 }
 
+// ── Borrar todos los datos ────────────────────────────────────────
+function confirmarBorrar() {
+  var m = document.getElementById('modal-borrar');
+  m.style.display = 'flex';
+}
+function cerrarModalBorrar() {
+  var m = document.getElementById('modal-borrar');
+  m.style.display = 'none';
+}
+function borrarTodosLosDatos() {
+  cerrarModalBorrar();
+  // Borrar cobradores y puntos de Firebase
+  db.ref('cobradores').remove();
+  db.ref('puntos').remove();
+  // Limpiar marcadores del mapa
+  for (var n in marcadores) { map.removeLayer(marcadores[n]); }
+  marcadores = {};
+  for (var nb in marcadoresPuntos) {
+    for (var ev in marcadoresPuntos[nb]) { map.removeLayer(marcadoresPuntos[nb][ev]); }
+  }
+  marcadoresPuntos = {};
+  datosCob = {};
+  ultimaPosicion = {};
+  tiempoParado = {};
+  document.getElementById('cnt-activos').textContent = '0';
+  document.getElementById('cnt-almuerzo').textContent = '0';
+  document.getElementById('cnt-sin').textContent = '0';
+  document.getElementById('alertas-overlay').innerHTML = '';
+  renderLista('');
+  showToast('🗑 Todos los datos borrados');
+}
+
 // ── Excel ─────────────────────────────────────────────────────────
 function descargarExcel() {
-  var csv = "COBRADOR,ESTADO,HORA,LATITUD,LONGITUD\n";
+  var csv = "COBRADOR,ESTADO,FECHA,HORA,LATITUD,LONGITUD\n";
   for (var nombre in datosCob) {
     if (!esCobrador(nombre)) continue;
     var d = datosCob[nombre];
-    csv += `${nombre},${d.estado||''},${d.hora||''},${d.latitud||''},${d.longitud||''}\n`;
+    csv += `${nombre},${d.estado||''},${d.fecha||''},${d.hora||''},${d.latitud||''},${d.longitud||''}\n`;
   }
   var blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   var url  = window.URL.createObjectURL(blob);
