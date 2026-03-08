@@ -339,13 +339,14 @@ body {
   bottom: 28px;
   left: 12px;
   z-index: 500;
-  background: rgba(8,13,24,0.85);
-  border: 1px solid var(--border);
+  background: rgba(10, 18, 35, 0.92);
+  border: 1px solid rgba(255,255,255,0.15);
   border-radius: 8px;
   padding: 10px 14px;
   font-size: 12px;
   font-family: 'Share Tech Mono', monospace;
   pointer-events: none;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
 }
 
 .legend-item {
@@ -527,7 +528,7 @@ var db = firebase.database();
 
 // ── Mapa ──────────────────────────────────────────────────────────
 var map = L.map('map', { zoomControl: true }).setView([-2.17, -79.90], 12);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
   maxZoom: 19,
   attribution: '© OpenStreetMap © CARTO'
 }).addTo(map);
@@ -537,22 +538,22 @@ function crearIcono(color) {
   return L.divIcon({
     className: '',
     html: `<div style="
-      width:14px;height:14px;border-radius:50%;
+      width:18px;height:18px;border-radius:50%;
       background:${color};
-      border:2px solid rgba(255,255,255,0.7);
-      box-shadow:0 0 10px ${color},0 0 20px ${color}44;
+      border:3px solid #fff;
+      box-shadow:0 0 12px ${color}, 0 2px 8px rgba(0,0,0,0.45);
     "></div>`,
-    iconSize: [14, 14],
-    iconAnchor: [7, 7],
-    popupAnchor: [0, -10]
+    iconSize: [18, 18],
+    iconAnchor: [9, 9],
+    popupAnchor: [0, -12]
   });
 }
 
 // ── Iconos para puntos de evento ──────────────────────────────────
 var CONFIG_EVENTOS = {
-  trabajando:   { color: '#00e676', bg: '#003319', emoji: '🟢', label: 'INICIO SESIÓN'    },
+  trabajando:   { color: '#00c853', bg: '#0a2a10', emoji: '🟢', label: 'INICIO SESIÓN'    },
   almuerzo:     { color: '#ff9100', bg: '#2a1200', emoji: '☕', label: 'INICIO ALMUERZO'  },
-  fin_almuerzo: { color: '#ffd600', bg: '#1a1200', emoji: '✅', label: 'FIN ALMUERZO'     },
+  fin_almuerzo: { color: '#e6b800', bg: '#1a1200', emoji: '✅', label: 'FIN ALMUERZO'     },
   finalizado:   { color: '#ff1744', bg: '#1a0008', emoji: '🏁', label: 'FIN RUTA'         }
 };
 
@@ -564,33 +565,35 @@ function crearIconoEvento(tipo) {
       <div style="display:flex;flex-direction:column;align-items:center;pointer-events:none;">
         <div style="
           background:${cfg.bg};
-          border:1.5px solid ${cfg.color};
+          border:2px solid ${cfg.color};
           border-radius:6px;
-          padding:3px 7px;
+          padding:4px 9px;
           font-family:Arial,sans-serif;
-          font-size:10px;
+          font-size:11px;
           font-weight:700;
           color:${cfg.color};
           letter-spacing:1px;
           white-space:nowrap;
-          box-shadow:0 2px 8px rgba(0,0,0,0.6);
+          box-shadow:0 3px 12px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.15);
           margin-bottom:3px;
+          text-shadow:0 1px 2px rgba(0,0,0,0.8);
         ">${cfg.emoji} ${cfg.label}</div>
         <div style="
-          width:12px;height:12px;border-radius:50%;
+          width:14px;height:14px;border-radius:50%;
           background:${cfg.color};
-          border:2px solid rgba(255,255,255,0.8);
-          box-shadow:0 0 8px ${cfg.color};
+          border:2.5px solid #fff;
+          box-shadow:0 0 10px ${cfg.color}, 0 2px 6px rgba(0,0,0,0.4);
         "></div>
         <div style="
-          width:2px;height:8px;
+          width:2px;height:9px;
           background:${cfg.color};
-          opacity:0.6;
+          opacity:0.8;
+          box-shadow:0 0 4px ${cfg.color};
         "></div>
       </div>`,
-    iconSize: [100, 50],
-    iconAnchor: [50, 50],
-    popupAnchor: [0, -52]
+    iconSize: [110, 54],
+    iconAnchor: [55, 54],
+    popupAnchor: [0, -56]
   });
 }
 
@@ -603,10 +606,11 @@ var ICONOS = {
 
 // ── Estado global ─────────────────────────────────────────────────
 var marcadores      = {};
-var marcadoresPuntos = {}; // puntos de evento por cobrador
+var marcadoresPuntos = {};
 var ultimaPosicion  = {};
 var tiempoParado    = {};
 var datosCob        = {};
+var datosPuntos     = {}; // datos crudos de puntos de evento por cobrador
 var vistaActual     = 'mapa';
 
 // ── Reloj ─────────────────────────────────────────────────────────
@@ -634,8 +638,9 @@ db.ref("puntos").on("value", function(snapshot) {
     }
   }
   marcadoresPuntos = {};
+  datosPuntos = snapshot.val() || {}; // guardar datos crudos para Excel
 
-  var datos = snapshot.val() || {};
+  var datos = datosPuntos;
   for (var nombre in datos) {
     if (!esCobrador(nombre)) continue;
     marcadoresPuntos[nombre] = {};
@@ -723,10 +728,12 @@ function procesarDatos() {
       marcadores[nombre].setIcon(icono);
     }
 
+    var fechaHoy = new Date().toLocaleDateString('es-EC');
+
     marcadores[nombre].bindPopup(`
       <div class="popup-name">${nombre}</div>
       <div class="popup-row">ESTADO &nbsp;<span>${estado.toUpperCase()}</span></div>
-      <div class="popup-row">FECHA &nbsp;&nbsp;<span>${d.fecha || '--'}</span></div>
+      <div class="popup-row">FECHA &nbsp;&nbsp;<span>${d.fecha || fechaHoy}</span></div>
       <div class="popup-row">HORA &nbsp;&nbsp;&nbsp;<span>${hora}</span></div>
       <div class="popup-row">LAT &nbsp;&nbsp;&nbsp;&nbsp;<span>${lat.toFixed(5)}</span></div>
       <div class="popup-row">LON &nbsp;&nbsp;&nbsp;&nbsp;<span>${lon.toFixed(5)}</span></div>
@@ -772,7 +779,8 @@ function renderLista(filtro) {
     var d        = datosCob[nombre] || null;
     var estado   = d ? (d.estado || 'sin-gps') : 'sin-gps';
     var hora     = d ? (d.hora   || '--:--')   : '--:--';
-    var fecha    = d ? (d.fecha  || '')         : '';
+    var hoy      = new Date().toLocaleDateString('es-EC');
+    var fecha    = d ? (d.fecha  || (d.hora ? hoy : '')) : '';
     var lat      = d ? d.latitud  : null;
     var lon      = d ? d.longitud : null;
     var tieneGPS = lat && lon;
@@ -857,7 +865,7 @@ function setView(vista, btn) {
           <span class="estado-pill pill-trabajando">trabajando</span>
           <span class="c-hora">${d.hora || '--:--'}</span>
         </div>
-        ${d.fecha ? '<div class="c-fecha">'+d.fecha+'</div>' : ''}`;
+        ${(d.fecha || d.hora) ? '<div class="c-fecha">'+(d.fecha || new Date().toLocaleDateString('es-EC'))+'</div>' : ''}`;
       if (d.latitud) card.onclick = () => { map.flyTo([d.latitud, d.longitud], 16, {duration:1}); marcadores[nombre] && marcadores[nombre].openPopup(); };
       container.appendChild(card);
     });
@@ -904,7 +912,7 @@ function setView(vista, btn) {
               <span class="estado-pill pill-finalizado">⚠ detenido</span>
               <span class="c-hora">${Math.floor(mins)} min</span>
             </div>
-            ${d.fecha ? '<div class="c-fecha">'+d.fecha+'</div>' : ''}`;
+            ${(d.fecha || d.hora) ? '<div class="c-fecha">'+(d.fecha || new Date().toLocaleDateString('es-EC'))+'</div>' : ''}`;
           card.onclick = () => { map.flyTo([d.latitud, d.longitud], 16, {duration:1}); };
           container.appendChild(card);
         }
@@ -937,6 +945,7 @@ function borrarTodosLosDatos() {
   }
   marcadoresPuntos = {};
   datosCob = {};
+  datosPuntos = {};
   ultimaPosicion = {};
   tiempoParado = {};
   document.getElementById('cnt-activos').textContent = '0';
@@ -949,19 +958,54 @@ function borrarTodosLosDatos() {
 
 // ── Excel ─────────────────────────────────────────────────────────
 function descargarExcel() {
-  var csv = "COBRADOR,ESTADO,FECHA,HORA,LATITUD,LONGITUD\n";
-  for (var nombre in datosCob) {
-    if (!esCobrador(nombre)) continue;
-    var d = datosCob[nombre];
-    csv += `${nombre},${d.estado||''},${d.fecha||''},${d.hora||''},${d.latitud||''},${d.longitud||''}\n`;
-  }
-  var blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  var BOM = '\uFEFF'; // para que Excel abra bien tildes y ñ
+  var headers = [
+    'COBRADOR',
+    'ESTADO ACTUAL',
+    'FECHA',
+    'HORA ÚLTIMA POSICIÓN',
+    'HORA INICIO SESIÓN',
+    'HORA INICIO ALMUERZO',
+    'HORA FIN ALMUERZO',
+    'HORA FIN RUTA',
+    'LATITUD',
+    'LONGITUD'
+  ];
+  var csv = BOM + headers.join(',') + '\n';
+
+  COBRADORES_VALIDOS.forEach(function(nombre) {
+    var d  = datosCob[nombre]    || {};
+    var pt = datosPuntos[nombre] || {};
+
+    var hoy = new Date().toLocaleDateString('es-EC');
+
+    var fila = [
+      nombre,
+      d.estado   || 'SIN GPS',
+      d.fecha    || (d.hora ? hoy : ''),
+      d.hora     || '',
+      (pt.trabajando   && pt.trabajando.hora)   || '',
+      (pt.almuerzo     && pt.almuerzo.hora)     || '',
+      (pt.fin_almuerzo && pt.fin_almuerzo.hora) || '',
+      (pt.finalizado   && pt.finalizado.hora)   || '',
+      d.latitud  || '',
+      d.longitud || ''
+    ];
+
+    // Envolver campos con comas en comillas
+    csv += fila.map(function(v) {
+      return String(v).indexOf(',') !== -1 ? '"' + v + '"' : v;
+    }).join(',') + '\n';
+  });
+
+  var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   var url  = window.URL.createObjectURL(blob);
-  var a    = document.createElement("a");
-  a.href = url;
-  a.download = `reporte_cobradores_${new Date().toLocaleDateString('es-EC').replace(/\//g,'-')}.csv`;
+  var a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'reporte_cobradores_' + new Date().toLocaleDateString('es-EC').replace(/\//g,'-') + '.csv';
   a.click();
-  showToast("📥 Reporte descargado");
+  window.URL.revokeObjectURL(url);
+  showToast('📥 Reporte descargado');
 }
 </script>
 </body>
