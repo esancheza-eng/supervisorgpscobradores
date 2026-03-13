@@ -14,473 +14,140 @@
 
 <style>
 :root {
-  --bg: #080d18;
-  --panel: #0e1623;
-  --card: #111d2e;
-  --border: #1a3050;
-  --accent: #00c6ff;
-  --accent2: #0072ff;
-  --green: #00e676;
-  --orange: #ff9100;
-  --red: #ff1744;
-  --yellow: #ffd600;
-  --text: #d8eaff;
-  --muted: #3d5a7a;
-  --sidebar-w: 330px;
+  --bg:#080d18; --panel:#0e1623; --card:#111d2e; --border:#1a3050;
+  --accent:#00c6ff; --green:#00e676; --orange:#ff9100;
+  --red:#ff1744; --yellow:#ffd600; --text:#d8eaff; --muted:#3d5a7a;
+  --sidebar-w:330px;
 }
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden;}
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+/* TOPBAR */
+#topbar{display:flex;align-items:center;gap:7px;padding:8px 14px;background:var(--panel);border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;z-index:100;}
+.topbar-title{font-size:16px;font-weight:700;letter-spacing:3px;text-transform:uppercase;background:linear-gradient(135deg,#d8eaff,#00c6ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-right:6px;white-space:nowrap;}
+.topbar-badge{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--accent);background:rgba(0,198,255,0.08);border:1px solid rgba(0,198,255,0.2);border-radius:3px;padding:3px 8px;margin-right:8px;}
+.nav-btn{display:flex;align-items:center;gap:5px;padding:6px 11px;font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;white-space:nowrap;}
+.nav-btn:hover,.nav-btn.active{background:rgba(0,198,255,0.08);border-color:var(--accent);color:var(--accent);}
+.nav-btn.danger{color:#ff6b6b;border-color:#3a1020;}
+.nav-btn.danger:hover{background:rgba(255,23,68,0.08);border-color:var(--red);color:var(--red);}
+#clock-top{margin-left:auto;font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:2px;white-space:nowrap;}
 
-body {
-  font-family: 'Rajdhani', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
+/* MAIN */
+#main{display:flex;flex:1;overflow:hidden;}
 
-/* ── TOPBAR ── */
-#topbar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: var(--panel);
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-  flex-wrap: wrap;
-  z-index: 100;
-}
+/* SIDEBAR */
+#sidebar{width:var(--sidebar-w);background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;}
+#sidebar-header{padding:10px 12px 8px;border-bottom:1px solid var(--border);flex-shrink:0;}
+#sidebar-header h3{font-size:10px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:7px;}
+.stats-row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:5px;margin-bottom:7px;}
+.stat-box{background:var(--card);border:1px solid var(--border);border-radius:7px;padding:7px 5px;text-align:center;cursor:pointer;transition:border-color .2s;}
+.stat-box:hover{border-color:var(--accent);}
+.stat-box .num{font-family:'Share Tech Mono',monospace;font-size:20px;font-weight:700;line-height:1;}
+.stat-box .lbl{font-size:9px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-top:2px;}
+.stat-box.green .num{color:var(--green);} .stat-box.red .num{color:var(--red);} .stat-box.orange .num{color:var(--orange);}
+#search{width:100%;padding:7px 10px;font-family:'Rajdhani',sans-serif;font-size:13px;color:var(--text);background:var(--card);border:1px solid var(--border);border-radius:6px;outline:none;transition:border-color .2s;}
+#search:focus{border-color:var(--accent);}
+#search::placeholder{color:var(--muted);}
+#cobrador-list{flex:1;overflow-y:auto;padding:5px;}
+#cobrador-list::-webkit-scrollbar{width:3px;}
+#cobrador-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
 
-.topbar-title {
-  font-size: 17px;
-  font-weight: 700;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  background: linear-gradient(135deg, #d8eaff, #00c6ff);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin-right: 8px;
-  white-space: nowrap;
-}
+/* COBRADOR CARD */
+.cobrador-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:5px;cursor:pointer;transition:border-color .2s,background .2s;position:relative;overflow:hidden;}
+.cobrador-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:3px 0 0 3px;}
+.cobrador-card.trabajando::before{background:var(--green);}
+.cobrador-card.almuerzo::before{background:var(--orange);}
+.cobrador-card.finalizado::before{background:var(--red);}
+.cobrador-card.sin-gps::before{background:var(--muted);}
+.cobrador-card:hover,.cobrador-card.sel{border-color:var(--accent);background:rgba(0,198,255,0.04);}
+.c-name{font-size:12px;font-weight:700;letter-spacing:.5px;margin-bottom:4px;line-height:1.2;}
+.c-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.estado-pill{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;padding:2px 6px;border-radius:3px;text-transform:uppercase;}
+.pill-trabajando{background:rgba(0,230,118,0.12);color:var(--green);border:1px solid rgba(0,230,118,0.25);}
+.pill-almuerzo{background:rgba(255,145,0,0.12);color:var(--orange);border:1px solid rgba(255,145,0,0.25);}
+.pill-finalizado{background:rgba(255,23,68,0.12);color:var(--red);border:1px solid rgba(255,23,68,0.25);}
+.pill-sin-gps{background:rgba(61,90,122,0.2);color:var(--muted);border:1px solid var(--border);}
+.c-hora{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);margin-left:auto;}
+.c-eventos{margin-top:5px;display:grid;grid-template-columns:1fr 1fr;gap:2px;}
+.c-ev{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);display:flex;gap:3px;align-items:center;}
+.c-ev .ev-h{color:var(--text);font-weight:700;}
+.c-ev .ev-c{font-size:8px;color:#2a4060;}
+.c-alert{font-size:10px;color:var(--red);margin-top:4px;letter-spacing:.5px;}
+.c-fecha{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;margin-top:2px;opacity:.7;}
+.btn-rec{margin-top:6px;width:100%;padding:4px;font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;background:rgba(0,198,255,0.07);border:1px solid rgba(0,198,255,0.2);border-radius:5px;color:var(--accent);cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:4px;}
+.btn-rec:hover{background:rgba(0,198,255,0.15);border-color:var(--accent);}
+.btn-rec.on{background:rgba(0,198,255,0.18);border-color:var(--accent);color:#fff;}
 
-.topbar-badge {
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 2px;
-  color: var(--accent);
-  background: rgba(0,198,255,0.08);
-  border: 1px solid rgba(0,198,255,0.2);
-  border-radius: 3px;
-  padding: 3px 8px;
-  margin-right: 10px;
-}
+/* MAP */
+#map-wrap{flex:1;position:relative;overflow:hidden;}
+#map{width:100%;height:100%;}
 
-.nav-btn {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 7px 12px;
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: transparent;
-  color: var(--muted);
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-.nav-btn:hover, .nav-btn.active {
-  background: rgba(0,198,255,0.08);
-  border-color: var(--accent);
-  color: var(--accent);
-}
-.nav-btn.danger { color: #ff6b6b; border-color: #3a1020; }
-.nav-btn.danger:hover { background: rgba(255,23,68,0.08); border-color: var(--red); color: var(--red); }
+/* Alertas overlay */
+#alertas-overlay{position:absolute;top:10px;right:10px;z-index:500;display:flex;flex-direction:column;gap:5px;max-width:290px;pointer-events:none;}
+.alerta-chip{background:rgba(255,23,68,0.9);color:#fff;font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;letter-spacing:.8px;padding:7px 11px;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,0.5);animation:slideIn .3s ease;}
+@keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
 
-#clock-top {
-  margin-left: auto;
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 14px;
-  color: var(--muted);
-  letter-spacing: 2px;
-  white-space: nowrap;
-}
+/* Leyenda */
+#map-legend{position:absolute;bottom:26px;left:10px;z-index:500;background:rgba(10,18,35,0.93);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:9px 12px;font-size:11px;font-family:'Share Tech Mono',monospace;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,0.4);}
+.legend-item{display:flex;align-items:center;gap:7px;margin-bottom:4px;color:var(--text);}
+.legend-item:last-child{margin-bottom:0;}
+.leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
 
-/* ── MAIN LAYOUT ── */
-#main {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-}
+/* Popup Leaflet */
+.leaflet-popup-content-wrapper{background:var(--card)!important;border:1px solid var(--border)!important;border-radius:8px!important;color:var(--text)!important;font-family:'Rajdhani',sans-serif!important;box-shadow:0 8px 30px rgba(0,0,0,0.6)!important;}
+.leaflet-popup-tip{background:var(--card)!important;}
+.leaflet-popup-content{font-size:13px!important;line-height:1.6!important;min-width:210px;}
+.pu-name{font-size:15px;font-weight:700;letter-spacing:1px;color:var(--accent);margin-bottom:5px;}
+.pu-row{color:var(--muted);font-size:11px;font-family:'Share Tech Mono',monospace;margin-bottom:2px;}
+.pu-row span{color:var(--text);}
+.pu-sec{border-top:1px solid var(--border);margin-top:7px;padding-top:6px;}
+.pu-sec-t{font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:5px;}
+.pu-alert{background:rgba(255,23,68,0.12);border:1px solid rgba(255,23,68,0.3);border-radius:4px;padding:4px 8px;font-size:11px;color:var(--red);margin-top:5px;}
 
-/* ── SIDEBAR ── */
-#sidebar {
-  width: var(--sidebar-w);
-  background: var(--panel);
-  border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  flex-shrink: 0;
-}
+/* Toast */
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--card);border:1px solid var(--accent);border-radius:8px;padding:11px 20px;font-size:14px;font-weight:600;letter-spacing:1px;color:var(--accent);box-shadow:0 8px 30px rgba(0,0,0,0.6);transition:transform .3s cubic-bezier(0.34,1.56,0.64,1),opacity .3s;opacity:0;z-index:9999;pointer-events:none;}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
 
-#sidebar-header {
-  padding: 12px 14px 10px;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-}
+/* Modal borrar */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.82);backdrop-filter:blur(6px);z-index:2000;display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.active{display:flex;}
 
-#sidebar-header h3 {
-  font-size: 10px;
-  letter-spacing: 3px;
-  color: var(--muted);
-  text-transform: uppercase;
-  margin-bottom: 8px;
-}
-
-.stats-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr;
-  gap: 5px;
-  margin-bottom: 8px;
-}
-
-.stat-box {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  padding: 8px 6px;
-  text-align: center;
-  cursor: pointer;
-  transition: border-color 0.2s;
-}
-.stat-box:hover { border-color: var(--accent); }
-
-.stat-box .num {
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 1;
-}
-.stat-box .lbl {
-  font-size: 9px;
-  letter-spacing: 1px;
-  color: var(--muted);
-  text-transform: uppercase;
-  margin-top: 3px;
-}
-.stat-box.green .num { color: var(--green); }
-.stat-box.red .num   { color: var(--red); }
-.stat-box.orange .num { color: var(--orange); }
-.stat-box.yellow .num { color: var(--yellow); }
-
-#search {
-  width: 100%;
-  padding: 7px 11px;
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 13px;
-  color: var(--text);
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  outline: none;
-  transition: border-color 0.2s;
-}
-#search:focus { border-color: var(--accent); }
-#search::placeholder { color: var(--muted); }
-
-#cobrador-list {
-  flex: 1;
-  overflow-y: auto;
-  padding: 6px;
-}
-#cobrador-list::-webkit-scrollbar { width: 4px; }
-#cobrador-list::-webkit-scrollbar-track { background: transparent; }
-#cobrador-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-/* ── COBRADOR CARD ── */
-.cobrador-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 9px 11px;
-  margin-bottom: 5px;
-  cursor: pointer;
-  transition: border-color 0.2s, background 0.2s;
-  position: relative;
-  overflow: hidden;
-}
-.cobrador-card::before {
-  content: '';
-  position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 3px;
-  border-radius: 3px 0 0 3px;
-}
-.cobrador-card.trabajando::before { background: var(--green); }
-.cobrador-card.almuerzo::before   { background: var(--orange); }
-.cobrador-card.finalizado::before { background: var(--red); }
-.cobrador-card.sin-gps::before    { background: var(--muted); }
-.cobrador-card:hover, .cobrador-card.selected-card {
-  border-color: var(--accent);
-  background: rgba(0,198,255,0.05);
-}
-
-.cobrador-card .c-name {
-  font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  margin-bottom: 5px;
-  line-height: 1.2;
-}
-
-.cobrador-card .c-meta {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  flex-wrap: wrap;
-}
-
-.estado-pill {
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 1px;
-  padding: 2px 7px;
-  border-radius: 3px;
-  text-transform: uppercase;
-}
-.pill-trabajando { background: rgba(0,230,118,0.12); color: var(--green);  border: 1px solid rgba(0,230,118,0.25); }
-.pill-almuerzo   { background: rgba(255,145,0,0.12);  color: var(--orange); border: 1px solid rgba(255,145,0,0.25); }
-.pill-finalizado { background: rgba(255,23,68,0.12);  color: var(--red);    border: 1px solid rgba(255,23,68,0.25); }
-.pill-sin-gps    { background: rgba(61,90,122,0.2);   color: var(--muted);  border: 1px solid var(--border); }
-.pill-alerta     { background: rgba(255,214,0,0.12);  color: var(--yellow); border: 1px solid rgba(255,214,0,0.3); }
-
-.c-hora { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--muted); margin-left: auto; }
-
-/* tiempos de eventos en card */
-.c-eventos {
-  margin-top: 6px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 3px;
-}
-.c-evento-row {
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 10px;
-  color: var(--muted);
-  display: flex;
-  gap: 4px;
-  align-items: center;
-}
-.c-evento-row .ev-label { font-size: 9px; letter-spacing: 0.5px; }
-.c-evento-row .ev-hora  { color: var(--text); font-weight: 700; }
-.c-evento-row .ev-coord { font-size: 9px; color: #2a5070; }
-
-.c-alert {
-  font-size: 11px;
-  color: var(--red);
-  margin-top: 5px;
-  letter-spacing: 0.5px;
-}
-.c-fecha { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 1px; margin-top: 3px; opacity: 0.7; }
-
-/* btn ver recorrido */
-.btn-recorrido {
-  margin-top: 7px;
-  width: 100%;
-  padding: 5px;
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  background: rgba(0,198,255,0.07);
-  border: 1px solid rgba(0,198,255,0.2);
-  border-radius: 5px;
-  color: var(--accent);
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-}
-.btn-recorrido:hover { background: rgba(0,198,255,0.15); border-color: var(--accent); }
-.btn-recorrido.activo { background: rgba(0,198,255,0.2); border-color: var(--accent); color: #fff; }
-
-/* ── MAP ── */
-#map-wrap { flex: 1; position: relative; overflow: hidden; }
-#map { width: 100%; height: 100%; }
-
-/* alertas overlay */
-#alertas-overlay {
-  position: absolute;
-  top: 12px; right: 12px;
-  z-index: 500;
-  display: flex; flex-direction: column;
-  gap: 5px; max-width: 280px;
-  pointer-events: none;
-}
-.alerta-chip {
-  background: rgba(255,23,68,0.88);
-  color: white;
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 12px; font-weight: 700;
-  letter-spacing: 0.8px;
-  padding: 7px 12px;
-  border-radius: 6px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
-  animation: slideIn 0.3s ease;
-}
-@keyframes slideIn {
-  from { opacity:0; transform:translateX(20px); }
-  to   { opacity:1; transform:translateX(0); }
-}
-
-/* leyenda */
-#map-legend {
-  position: absolute;
-  bottom: 28px; left: 12px;
-  z-index: 500;
-  background: rgba(10,18,35,0.93);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 8px;
-  padding: 10px 14px;
-  font-size: 11px;
-  font-family: 'Share Tech Mono', monospace;
-  pointer-events: none;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-}
-.legend-item { display:flex; align-items:center; gap:7px; margin-bottom:4px; color:var(--text); }
-.legend-item:last-child { margin-bottom:0; }
-.leg-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
-
-/* popup leaflet */
-.leaflet-popup-content-wrapper {
-  background: var(--card) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: 8px !important;
-  color: var(--text) !important;
-  font-family: 'Rajdhani', sans-serif !important;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.6) !important;
-}
-.leaflet-popup-tip { background: var(--card) !important; }
-.leaflet-popup-content { font-size: 13px !important; line-height: 1.6 !important; min-width:200px; }
-.popup-name  { font-size:15px; font-weight:700; letter-spacing:1px; color:var(--accent); margin-bottom:5px; }
-.popup-row   { color:var(--muted); font-size:11px; font-family:'Share Tech Mono',monospace; margin-bottom:2px; }
-.popup-row span { color:var(--text); }
-.popup-section { border-top:1px solid var(--border); margin-top:7px; padding-top:6px; }
-.popup-section-title { font-size:10px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; margin-bottom:5px; }
-.popup-alerta { background:rgba(255,214,0,0.12); border:1px solid rgba(255,214,0,0.3); border-radius:4px; padding:4px 8px; font-size:11px; color:var(--yellow); margin-top:5px; }
-
-/* toast */
-.toast {
-  position: fixed;
-  bottom: 24px; left: 50%;
-  transform: translateX(-50%) translateY(60px);
-  background: var(--card);
-  border: 1px solid var(--accent);
-  border-radius: 8px;
-  padding: 11px 22px;
-  font-size: 14px; font-weight: 600; letter-spacing: 1px;
-  color: var(--accent);
-  box-shadow: 0 8px 30px rgba(0,0,0,0.6);
-  transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s;
-  opacity: 0; z-index: 9999; pointer-events: none;
-}
-.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
-
-/* modal borrar */
-.modal-overlay {
-  position:fixed; inset:0;
-  background:rgba(0,0,0,0.82);
-  backdrop-filter:blur(6px);
-  z-index:2000;
-  display:none; align-items:center; justify-content:center;
-  padding:20px;
-}
-.modal-overlay.active { display:flex; }
-
-/* punto alerta de detención en mapa */
-.alert-stop-label {
-  background: rgba(255,214,0,0.92);
-  color: #000;
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 11px; font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 4px;
-  white-space: nowrap;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-  pointer-events: none;
-}
-
-.leaflet-control-zoom {
-  border: 1px solid var(--border) !important;
-  border-radius: 6px !important;
-  overflow: hidden;
-}
-.leaflet-control-zoom a {
-  background: var(--panel) !important;
-  color: var(--text) !important;
-  border: none !important;
-}
-.leaflet-control-zoom a:hover { background: var(--card) !important; }
+.leaflet-control-zoom{border:1px solid var(--border)!important;border-radius:6px!important;overflow:hidden;}
+.leaflet-control-zoom a{background:var(--panel)!important;color:var(--text)!important;border:none!important;}
+.leaflet-control-zoom a:hover{background:var(--card)!important;}
 </style>
 </head>
 <body>
 
-<!-- TOPBAR -->
 <div id="topbar">
   <span class="topbar-title">GPS Cobradores</span>
   <span class="topbar-badge">SUPERVISOR</span>
-
   <button class="nav-btn active"  onclick="setView('mapa',this)">📍 Mapa en Vivo</button>
-  <button class="nav-btn"        onclick="setView('activos',this)"    style="color:#00e676;border-color:#0a3020;">🟢 Activos</button>
-  <button class="nav-btn"        onclick="setView('almuerzo',this)"   style="color:#ff9100;border-color:#3a1a00;">☕ Almuerzo</button>
-  <button class="nav-btn"        onclick="setView('finalizados',this)"style="color:#ff6b6b;border-color:#3a1020;">🏁 Finalizados</button>
+  <button class="nav-btn"        onclick="setView('activos',this)"     style="color:#00e676;border-color:#0a3020;">🟢 Activos</button>
+  <button class="nav-btn"        onclick="setView('almuerzo',this)"    style="color:#ff9100;border-color:#3a1a00;">☕ Almuerzo</button>
+  <button class="nav-btn"        onclick="setView('finalizados',this)" style="color:#ff6b6b;border-color:#3a1020;">🏁 Finalizados</button>
   <button class="nav-btn danger" onclick="setView('sin-gps',this)">🔴 Sin GPS</button>
-  <button class="nav-btn"       onclick="setView('detenciones',this)" style="color:#ffd600;border-color:#3a2a00;">⚠ Detenidos</button>
-  <button class="nav-btn"       onclick="descargarExcel()"            style="color:#4dffb0;border-color:#0a3020;">📥 Excel</button>
-  <button class="nav-btn danger" onclick="confirmarBorrar()"          style="margin-left:auto;">🗑 Borrar Datos</button>
-
+  <button class="nav-btn"        onclick="setView('detenciones',this)" style="color:#ffd600;border-color:#3a2a00;">⚠ Detenidos</button>
+  <button class="nav-btn"        onclick="descargarExcel()"            style="color:#4dffb0;border-color:#0a3020;">📥 Excel</button>
+  <button class="nav-btn danger" onclick="confirmarBorrar()"           style="margin-left:auto;">🗑 Borrar</button>
   <span id="clock-top">--:--:--</span>
 </div>
 
-<!-- MAIN -->
 <div id="main">
-
-  <!-- SIDEBAR -->
   <div id="sidebar">
     <div id="sidebar-header">
       <h3>Panel de cobradores</h3>
       <div class="stats-row">
-        <div class="stat-box green"   onclick="setView('activos',    document.querySelectorAll('.nav-btn')[1])">
-          <div class="num" id="cnt-activos">0</div><div class="lbl">Activos</div>
-        </div>
-        <div class="stat-box orange"  onclick="setView('almuerzo',   document.querySelectorAll('.nav-btn')[2])">
-          <div class="num" id="cnt-almuerzo">0</div><div class="lbl">Almuerzo</div>
-        </div>
-        <div class="stat-box red"     onclick="setView('sin-gps',    document.querySelectorAll('.nav-btn')[4])">
-          <div class="num" id="cnt-sin">0</div><div class="lbl">Sin GPS</div>
-        </div>
-        <div class="stat-box"         onclick="setView('finalizados', document.querySelectorAll('.nav-btn')[3])" style="border-color:#3a1020;">
-          <div class="num" id="cnt-finalizados" style="color:#ff6b6b;">0</div><div class="lbl">Finaliz.</div>
-        </div>
+        <div class="stat-box green"   onclick="setView('activos',    document.querySelectorAll('.nav-btn')[1])"><div class="num" id="cnt-activos">0</div><div class="lbl">Activos</div></div>
+        <div class="stat-box orange"  onclick="setView('almuerzo',   document.querySelectorAll('.nav-btn')[2])"><div class="num" id="cnt-almuerzo">0</div><div class="lbl">Almuerzo</div></div>
+        <div class="stat-box red"     onclick="setView('sin-gps',    document.querySelectorAll('.nav-btn')[4])"><div class="num" id="cnt-sin">0</div><div class="lbl">Sin GPS</div></div>
+        <div class="stat-box"         onclick="setView('finalizados', document.querySelectorAll('.nav-btn')[3])" style="border-color:#3a1020;"><div class="num" id="cnt-finalizados" style="color:#ff6b6b;">0</div><div class="lbl">Finaliz.</div></div>
       </div>
       <input id="search" type="text" placeholder="🔍  Buscar cobrador..." oninput="filtrarLista(this.value)">
     </div>
     <div id="cobrador-list"></div>
   </div>
 
-  <!-- MAP -->
   <div id="map-wrap">
     <div id="map"></div>
     <div id="alertas-overlay"></div>
@@ -489,32 +156,30 @@ body {
       <div class="legend-item"><div class="leg-dot" style="background:#ff9100"></div> Almuerzo</div>
       <div class="legend-item"><div class="leg-dot" style="background:#ff1744"></div> Finalizado</div>
       <div class="legend-item"><div class="leg-dot" style="background:#3d5a7a"></div> Sin GPS</div>
-      <div style="height:5px;border-top:1px solid #1a3050;margin:5px 0;"></div>
-      <div class="legend-item" style="font-size:10px;color:#3d5a7a;letter-spacing:1px;">EVENTOS</div>
-      <div class="legend-item"><div class="leg-dot" style="background:#00c853"></div> Inicio Sesión</div>
-      <div class="legend-item"><div class="leg-dot" style="background:#ff9100"></div> Inicio Almuerzo</div>
-      <div class="legend-item"><div class="leg-dot" style="background:#ffd600"></div> Fin Almuerzo</div>
-      <div class="legend-item"><div class="leg-dot" style="background:#ff1744"></div> Fin Ruta</div>
-      <div style="height:5px;border-top:1px solid #1a3050;margin:5px 0;"></div>
-      <div class="legend-item"><div class="leg-dot" style="background:#ffd600;border:2px solid #000;"></div> ⚠ +20 min detenido</div>
+      <div style="height:4px;border-top:1px solid #1a3050;margin:5px 0;"></div>
+      <div class="legend-item" style="font-size:10px;color:#3d5a7a;letter-spacing:1px;">MARCADORES DE EVENTO</div>
+      <div class="legend-item">🟢 Inicio Sesión</div>
+      <div class="legend-item">☕ Inicio Almuerzo</div>
+      <div class="legend-item">✅ Fin Almuerzo</div>
+      <div class="legend-item">🏁 Fin Ruta GPS</div>
+      <div style="height:4px;border-top:1px solid #1a3050;margin:5px 0;"></div>
+      <div class="legend-item"><div class="leg-dot" style="background:#ff1744;border:2px solid #fff;box-shadow:0 0 6px #ff1744;"></div> ⚠ +20 min detenido</div>
+      <div class="legend-item" style="color:#3d5a7a;font-size:10px;">── Recorrido GPS</div>
     </div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
-<!-- Modal borrar datos -->
 <div id="modal-borrar" class="modal-overlay">
-  <div style="background:#0f1928;border:1px solid #ff1744;border-radius:16px;padding:28px 22px;width:100%;max-width:340px;box-shadow:0 20px 60px rgba(0,0,0,0.8);text-align:center;font-family:'Rajdhani',sans-serif;">
-    <div style="font-size:40px;margin-bottom:12px;">🗑</div>
-    <div style="font-size:10px;letter-spacing:3px;color:#3d5a7a;text-transform:uppercase;margin-bottom:8px;">Confirmar acción</div>
-    <div style="font-size:18px;font-weight:700;letter-spacing:2px;color:#ff1744;margin-bottom:8px;">BORRAR TODOS LOS DATOS</div>
-    <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#3d5a7a;margin-bottom:22px;line-height:1.6;">
-      Se eliminarán todos los registros<br>de cobradores y puntos GPS.<br>Esta acción no se puede deshacer.
-    </div>
+  <div style="background:#0f1928;border:1px solid #ff1744;border-radius:16px;padding:26px 20px;width:100%;max-width:340px;box-shadow:0 20px 60px rgba(0,0,0,0.8);text-align:center;font-family:'Rajdhani',sans-serif;">
+    <div style="font-size:38px;margin-bottom:10px;">🗑</div>
+    <div style="font-size:10px;letter-spacing:3px;color:#3d5a7a;text-transform:uppercase;margin-bottom:8px;">Confirmar</div>
+    <div style="font-size:17px;font-weight:700;letter-spacing:2px;color:#ff1744;margin-bottom:8px;">BORRAR TODOS LOS DATOS</div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#3d5a7a;margin-bottom:20px;line-height:1.6;">Se eliminarán cobradores, puntos<br>e historial de recorrido.</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-      <button onclick="cerrarModalBorrar()" style="height:46px;font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;text-transform:uppercase;background:transparent;border:1px solid #1a3050;border-radius:7px;color:#3d5a7a;cursor:pointer;">✕ Cancelar</button>
-      <button onclick="borrarTodosLosDatos()" style="height:46px;font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;text-transform:uppercase;background:linear-gradient(135deg,#880015,#ff1744);border:none;border-radius:7px;color:#fff;cursor:pointer;">🗑 Borrar</button>
+      <button onclick="cerrarModalBorrar()" style="height:44px;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;background:transparent;border:1px solid #1a3050;border-radius:7px;color:#3d5a7a;cursor:pointer;">✕ Cancelar</button>
+      <button onclick="borrarTodosLosDatos()" style="height:44px;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;background:linear-gradient(135deg,#880015,#ff1744);border:none;border-radius:7px;color:#fff;cursor:pointer;">🗑 Borrar</button>
     </div>
   </div>
 </div>
@@ -522,119 +187,143 @@ body {
 <script>
 // ── Firebase ──────────────────────────────────────────────────────
 var firebaseConfig = {
-  apiKey: "AIzaSyCW__ndth0b9jYO91QF8x6Psp7-lK1-lW4",
-  authDomain: "gps-cobradores.firebaseapp.com",
-  databaseURL: "https://gps-cobradores-default-rtdb.firebaseio.com",
-  projectId: "gps-cobradores"
+  apiKey:"AIzaSyCW__ndth0b9jYO91QF8x6Psp7-lK1-lW4",
+  authDomain:"gps-cobradores.firebaseapp.com",
+  databaseURL:"https://gps-cobradores-default-rtdb.firebaseio.com",
+  projectId:"gps-cobradores"
 };
 firebase.initializeApp(firebaseConfig);
 var db = firebase.database();
 
-// ── Mapa ──────────────────────────────────────────────────────────
-var map = L.map('map', { zoomControl: true }).setView([-2.17, -79.90], 12);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-  maxZoom: 19, attribution: '© OpenStreetMap © CARTO'
+// ── Mapa con tiles Google-style ───────────────────────────────────
+var map = L.map('map',{zoomControl:true}).setView([-2.17,-79.90],12);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
+  maxZoom:19, attribution:'© OpenStreetMap © CARTO'
 }).addTo(map);
 
-// ── Iconos posición actual ────────────────────────────────────────
-function crearIcono(color) {
+// ── Icono posición actual ─────────────────────────────────────────
+function iconoPos(color) {
   return L.divIcon({
-    className: '',
-    html: `<div style="width:18px;height:18px;border-radius:50%;background:${color};border:3px solid #fff;box-shadow:0 0 12px ${color},0 2px 8px rgba(0,0,0,0.45);"></div>`,
-    iconSize: [18,18], iconAnchor: [9,9], popupAnchor: [0,-12]
+    className:'',
+    html:`<div style="width:16px;height:16px;border-radius:50%;background:${color};border:3px solid #fff;box-shadow:0 0 10px ${color},0 2px 6px rgba(0,0,0,0.4);"></div>`,
+    iconSize:[16,16], iconAnchor:[8,8], popupAnchor:[0,-10]
   });
 }
 
-// ── Iconos para eventos ───────────────────────────────────────────
-var CFG_EV = {
-  trabajando:   { color:'#00c853', bg:'#0a2a10', emoji:'🟢', label:'INICIO SESIÓN'   },
-  almuerzo:     { color:'#ff9100', bg:'#2a1200', emoji:'☕', label:'INICIO ALMUERZO' },
-  fin_almuerzo: { color:'#e6b800', bg:'#1a1200', emoji:'✅', label:'FIN ALMUERZO'    },
-  finalizado:   { color:'#ff1744', bg:'#1a0008', emoji:'🏁', label:'FIN RUTA'        }
-};
+// ── Icono estilo Google Maps (pin con etiqueta) ───────────────────
+// Exactamente como en la imagen: pin redondeado con foto/icono dentro y etiqueta de hora
+function iconoEvento(tipo) {
+  var cfg = {
+    trabajando:   { color:'#1a73e8', bg:'#e8f0fe', emoji:'I',  label:'INICIO',    hora_color:'#1a73e8' },
+    almuerzo:     { color:'#f9ab00', bg:'#fef7e0', emoji:'🍽',  label:'ALMUERZO',  hora_color:'#f9ab00' },
+    fin_almuerzo: { color:'#34a853', bg:'#e6f4ea', emoji:'✓',  label:'FIN ALM',   hora_color:'#34a853' },
+    finalizado:   { color:'#ea4335', bg:'#fce8e6', emoji:'F',  label:'FIN RUTA',  hora_color:'#ea4335' }
+  }[tipo] || { color:'#5f6368', bg:'#f1f3f4', emoji:'•', label:tipo, hora_color:'#5f6368' };
 
-function crearIconoEvento(tipo) {
-  var cfg = CFG_EV[tipo] || { color:'#00c6ff', bg:'#001a2a', emoji:'📍', label:tipo };
   return L.divIcon({
-    className: '',
-    html: `
-      <div style="display:flex;flex-direction:column;align-items:center;pointer-events:none;">
-        <div style="background:${cfg.bg};border:2px solid ${cfg.color};border-radius:5px;padding:3px 8px;
-          font-family:Arial,sans-serif;font-size:10px;font-weight:700;color:${cfg.color};
-          letter-spacing:1px;white-space:nowrap;box-shadow:0 3px 12px rgba(0,0,0,0.55);
-          margin-bottom:3px;text-shadow:0 1px 2px rgba(0,0,0,0.8);">${cfg.emoji} ${cfg.label}</div>
-        <div style="width:13px;height:13px;border-radius:50%;background:${cfg.color};
-          border:2.5px solid #fff;box-shadow:0 0 10px ${cfg.color},0 2px 6px rgba(0,0,0,0.4);"></div>
-        <div style="width:2px;height:8px;background:${cfg.color};opacity:0.8;"></div>
+    className:'',
+    html:`
+      <div style="display:flex;flex-direction:column;align-items:center;pointer-events:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
+        <div style="
+          background:${cfg.bg};
+          border:2.5px solid ${cfg.color};
+          border-radius:20px 20px 20px 4px;
+          width:36px; height:36px;
+          display:flex; align-items:center; justify-content:center;
+          font-size:15px; font-weight:900; color:${cfg.color};
+          font-family:Arial,sans-serif;
+          box-shadow:0 2px 8px rgba(0,0,0,0.25);
+        ">${cfg.emoji}</div>
+        <div style="
+          width:0; height:0;
+          border-left:5px solid transparent;
+          border-right:5px solid transparent;
+          border-top:7px solid ${cfg.color};
+          margin-top:-1px;
+        "></div>
       </div>`,
-    iconSize: [110,50], iconAnchor: [55,50], popupAnchor: [0,-52]
+    iconSize:[36,46], iconAnchor:[18,46], popupAnchor:[0,-48]
   });
 }
 
-// Icono de alerta de detención (punto amarillo con tiempo)
-function crearIconoAlerta(mins, hora, lat, lon) {
+// ── Icono alerta detención (pin rojo pulsante) ────────────────────
+function iconoAlerta(mins, hora) {
   return L.divIcon({
-    className: '',
-    html: `
-      <div style="display:flex;flex-direction:column;align-items:center;pointer-events:none;">
-        <div style="background:rgba(255,214,0,0.92);border:2px solid #ffd600;border-radius:5px;
-          padding:3px 9px;font-family:Arial,sans-serif;font-size:10px;font-weight:700;
-          color:#000;white-space:nowrap;box-shadow:0 3px 10px rgba(0,0,0,0.5);
-          margin-bottom:3px;">⚠ ${Math.floor(mins)} min detenido · ${hora}</div>
-        <div style="width:13px;height:13px;border-radius:50%;background:#ffd600;
-          border:2.5px solid #fff;box-shadow:0 0 12px #ffd600,0 2px 6px rgba(0,0,0,0.4);
-          animation:pulsarAlerta 1.5s infinite;"></div>
-        <div style="width:2px;height:8px;background:#ffd600;opacity:0.8;"></div>
-      </div>
-      <style>
-        @keyframes pulsarAlerta {
-          0%,100% { box-shadow:0 0 12px #ffd600; }
-          50% { box-shadow:0 0 24px #ffd600, 0 0 40px rgba(255,214,0,0.5); }
-        }
-      </style>`,
-    iconSize: [180,50], iconAnchor: [90,50], popupAnchor: [0,-52]
+    className:'',
+    html:`
+      <style>@keyframes pulseRed{0%,100%{box-shadow:0 0 0 0 rgba(255,23,68,0.6)}50%{box-shadow:0 0 0 10px rgba(255,23,68,0)}}</style>
+      <div style="display:flex;flex-direction:column;align-items:center;pointer-events:none;filter:drop-shadow(0 2px 6px rgba(255,23,68,0.5));">
+        <div style="
+          background:#fff;
+          border:2.5px solid #ff1744;
+          border-radius:4px;
+          padding:2px 7px;
+          font-family:Arial,sans-serif;
+          font-size:10px; font-weight:700;
+          color:#ff1744;
+          white-space:nowrap;
+          margin-bottom:2px;
+          box-shadow:0 2px 6px rgba(0,0,0,0.25);
+        ">⚠ ${Math.floor(mins)} min · ${hora}</div>
+        <div style="
+          background:#ff1744;
+          border:2.5px solid #fff;
+          border-radius:50%;
+          width:20px; height:20px;
+          animation:pulseRed 1.5s infinite;
+        "></div>
+      </div>`,
+    iconSize:[120,46], iconAnchor:[10,46], popupAnchor:[50,-48]
   });
 }
 
-var ICONOS = {
-  trabajando: crearIcono('#00e676'),
-  almuerzo:   crearIcono('#ff9100'),
-  finalizado: crearIcono('#ff1744'),
-  default:    crearIcono('#3d5a7a')
+// ── Icono punto de recorrido normal (cada 5 min) ──────────────────
+function iconoPuntoRecorrido(hora, estado, esPrimero, esUltimo) {
+  if (esPrimero || esUltimo) return null; // los extremos usan circleMarker grande
+  return L.divIcon({
+    className:'',
+    html:`
+      <div style="display:flex;flex-direction:column;align-items:center;pointer-events:none;">
+        <div style="
+          background:#fff;
+          border:1.5px solid #1a73e8;
+          border-radius:3px;
+          padding:1px 5px;
+          font-family:Arial,sans-serif;
+          font-size:9px; font-weight:700;
+          color:#1a73e8;
+          white-space:nowrap;
+          box-shadow:0 1px 4px rgba(0,0,0,0.2);
+          margin-bottom:2px;
+        ">${hora}</div>
+        <div style="width:0;height:0;border-left:3px solid transparent;border-right:3px solid transparent;border-top:4px solid #1a73e8;margin-top:-1px;"></div>
+      </div>`,
+    iconSize:[60,28], iconAnchor:[30,28], popupAnchor:[0,-30]
+  });
+}
+
+var ICONOS_POS = {
+  trabajando: iconoPos('#00e676'),
+  almuerzo:   iconoPos('#ff9100'),
+  finalizado: iconoPos('#ff1744'),
+  default:    iconoPos('#3d5a7a')
 };
 
 // ── Estado global ─────────────────────────────────────────────────
-var marcadores           = {};   // marcadores de posición actual
-var marcadoresPuntos     = {};   // marcadores de eventos (inicio sesión, almuerzo, etc.)
-var marcadoresAlerta     = {};   // marcadores de alerta de detención
-var recorridoLayers      = {};   // polylines de recorrido
-var recorridoActivo      = null; // nombre del cobrador con recorrido visible
-var ultimaPosicion       = {};   // última posición conocida por cobrador
-var tiempoParado         = {};   // timestamp inicio de detención
-var horaParado           = {};   // hora legible de cuando se detuvo
-var datosCob             = {};   // datos actuales de Firebase "cobradores"
-var datosPuntos          = {};   // datos de Firebase "puntos"
-var historialRecorrido   = {};   // historial de posiciones por cobrador
-var vistaActual          = 'mapa';
+var marcadores       = {};
+var marcadoresPuntos = {};
+var marcadoresAlerta = {};
+var recorridoLayers  = {};
+var recorridoActivo  = null;
+var ultimaPosicion   = {};
+var tiempoParado     = {};
+var horaParado       = {};
+var datosCob         = {};
+var datosPuntos      = {};
+var historialRec     = {};
 
-// ── Reloj ─────────────────────────────────────────────────────────
-function tick() {
-  document.getElementById('clock-top').textContent = new Date().toLocaleTimeString('es-EC');
-}
-setInterval(tick, 1000); tick();
-
-// ── Toast ─────────────────────────────────────────────────────────
-var toastTimer;
-function showToast(msg) {
-  var t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
-}
-
-// ── Lista de cobradores válidos ───────────────────────────────────
-var COBRADORES_VALIDOS = [
+// ── Cobradores válidos ────────────────────────────────────────────
+var COBRADORES = [
   'AGUILAR CONTRERAS BYRON LUIS',
   'CARRANZA JIMENEZ FRANKLIN GEOVANNY',
   'CHAVEZ GOMEZCUELLO MARIO JAVIER',
@@ -650,33 +339,47 @@ var COBRADORES_VALIDOS = [
   'QUINONEZ AYALA JEFFERSON JAVIER',
   'VILLARREAL NAVARRETE FAUSTO ALBERTO'
 ];
-function esCobrador(n) { return COBRADORES_VALIDOS.indexOf(n.toUpperCase()) !== -1; }
+function esCob(n){ return COBRADORES.indexOf(n.toUpperCase())!==-1; }
 
-// ── Listener Firebase: puntos de evento ──────────────────────────
+// ── Reloj ─────────────────────────────────────────────────────────
+setInterval(()=>{ document.getElementById('clock-top').textContent=new Date().toLocaleTimeString('es-EC'); },1000);
+document.getElementById('clock-top').textContent=new Date().toLocaleTimeString('es-EC');
+
+// ── Toast ─────────────────────────────────────────────────────────
+var _tt;
+function showToast(m){ var t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(_tt); _tt=setTimeout(()=>t.classList.remove('show'),3000); }
+
+// ── Firebase: puntos de evento ────────────────────────────────────
 db.ref("puntos").on("value", function(snap) {
-  // Limpiar marcadores de eventos
   for (var nb in marcadoresPuntos) {
-    for (var ev in marcadoresPuntos[nb]) { map.removeLayer(marcadoresPuntos[nb][ev]); }
+    for (var ev in marcadoresPuntos[nb]) map.removeLayer(marcadoresPuntos[nb][ev]);
   }
   marcadoresPuntos = {};
   datosPuntos = snap.val() || {};
 
   for (var nombre in datosPuntos) {
-    if (!esCobrador(nombre)) continue;
+    if (!esCob(nombre)) continue;
     marcadoresPuntos[nombre] = {};
     var eventos = datosPuntos[nombre];
     for (var tipo in eventos) {
       var p = eventos[tipo];
       if (!p.latitud || !p.longitud) continue;
-      var cfg = CFG_EV[tipo] || { color:'#00c6ff', bg:'#001a2a', emoji:'📍', label:tipo };
-      var m = L.marker([p.latitud, p.longitud], { icon: crearIconoEvento(tipo) }).addTo(map);
+
+      var cfg2 = {
+        trabajando:   { color:'#1a73e8', label:'🟢 INICIO SESIÓN',   hora:p.hora||'--', fecha:p.fecha||'--' },
+        almuerzo:     { color:'#f9ab00', label:'☕ INICIO ALMUERZO',  hora:p.hora||'--', fecha:p.fecha||'--' },
+        fin_almuerzo: { color:'#34a853', label:'✅ FIN ALMUERZO',     hora:p.hora||'--', fecha:p.fecha||'--' },
+        finalizado:   { color:'#ea4335', label:'🏁 FIN RUTA GPS',     hora:p.hora||'--', fecha:p.fecha||'--' }
+      }[tipo] || { color:'#5f6368', label:'📍 '+tipo, hora:p.hora||'--', fecha:p.fecha||'--' };
+
+      var m = L.marker([p.latitud, p.longitud], { icon:iconoEvento(tipo), zIndexOffset:200 }).addTo(map);
       m.bindPopup(`
-        <div class="popup-name">${nombre}</div>
-        <div class="popup-row">EVENTO &nbsp;<span>${cfg.emoji} ${cfg.label}</span></div>
-        <div class="popup-row">HORA &nbsp;&nbsp;&nbsp;<span>${p.hora || '--'}</span></div>
-        <div class="popup-row">FECHA &nbsp;&nbsp;<span>${p.fecha || '--'}</span></div>
-        <div class="popup-row">LAT &nbsp;&nbsp;&nbsp;&nbsp;<span>${(+p.latitud).toFixed(6)}</span></div>
-        <div class="popup-row">LON &nbsp;&nbsp;&nbsp;&nbsp;<span>${(+p.longitud).toFixed(6)}</span></div>
+        <div class="pu-name">${nombre}</div>
+        <div class="pu-row" style="color:${cfg2.color};font-size:13px;font-weight:700;margin-bottom:6px;">${cfg2.label}</div>
+        <div class="pu-row">HORA &nbsp;&nbsp;&nbsp;<span>${cfg2.hora}</span></div>
+        <div class="pu-row">FECHA &nbsp;&nbsp;<span>${cfg2.fecha}</span></div>
+        <div class="pu-row">LAT &nbsp;&nbsp;&nbsp;&nbsp;<span>${(+p.latitud).toFixed(6)}</span></div>
+        <div class="pu-row">LON &nbsp;&nbsp;&nbsp;&nbsp;<span>${(+p.longitud).toFixed(6)}</span></div>
       `);
       marcadoresPuntos[nombre][tipo] = m;
     }
@@ -684,646 +387,441 @@ db.ref("puntos").on("value", function(snap) {
   renderLista('');
 });
 
-// ── Listener Firebase: posición actual ───────────────────────────
+// ── Firebase: posición actual ─────────────────────────────────────
 db.ref("cobradores").on("value", function(snap) {
   datosCob = snap.val() || {};
   procesarDatos();
 });
 
-// ── Listener Firebase: historial de recorrido ────────────────────
+// ── Firebase: historial de recorrido ─────────────────────────────
 db.ref("historial").on("value", function(snap) {
-  historialRecorrido = snap.val() || {};
-  // Si hay un recorrido activo, refrescarlo
-  if (recorridoActivo) {
-    mostrarRecorrido(recorridoActivo);
-  }
+  historialRec = snap.val() || {};
+  if (recorridoActivo) mostrarRecorrido(recorridoActivo);
 });
 
-// ── Procesar datos principales ────────────────────────────────────
+// ── Procesar posiciones actuales ──────────────────────────────────
 function procesarDatos() {
-  var activos = 0, almuerzo = 0, sinGPS = 0, finalizados = 0;
-  var alertasHTML = '';
+  var activos=0, almuerzo=0, sinGPS=0, finalizados=0, alertasHTML='';
 
-  // Limpiar marcadores de cobradores que ya no están
   for (var n in marcadores) {
     if (!datosCob[n]) { map.removeLayer(marcadores[n]); delete marcadores[n]; }
   }
 
   for (var nombre in datosCob) {
-    if (!esCobrador(nombre)) continue;
+    if (!esCob(nombre)) continue;
     var d = datosCob[nombre];
-    if (!d || typeof d !== 'object') continue;
+    if (!d || typeof d!=='object') continue;
+    var lat=d.latitud, lon=d.longitud, estado=d.estado||'sin-gps', hora=d.hora||'--:--';
+    if (!lat||!lon){ sinGPS++; continue; }
+    if (estado==='trabajando') activos++;
+    if (estado==='almuerzo')   almuerzo++;
+    if (estado==='finalizado') finalizados++;
 
-    var lat    = d.latitud;
-    var lon    = d.longitud;
-    var estado = d.estado || 'sin-gps';
-    var hora   = d.hora   || '--:--';
-
-    if (!lat || !lon) { sinGPS++; continue; }
-    if (estado === 'trabajando') activos++;
-    if (estado === 'almuerzo')   almuerzo++;
-    if (estado === 'finalizado') finalizados++;
-
-    // Actualizar o crear marcador
-    var icono = ICONOS[estado] || ICONOS.default;
+    var icono = ICONOS_POS[estado]||ICONOS_POS.default;
     if (!marcadores[nombre]) {
-      marcadores[nombre] = L.marker([lat, lon], { icon: icono }).addTo(map);
+      marcadores[nombre]=L.marker([lat,lon],{icon:icono,zIndexOffset:500}).addTo(map);
     } else {
-      marcadores[nombre].setLatLng([lat, lon]);
+      marcadores[nombre].setLatLng([lat,lon]);
       marcadores[nombre].setIcon(icono);
     }
 
-    // Obtener puntos de evento para popup
-    var pt = datosPuntos[nombre] || {};
-    var horaInicioSesion  = (pt.trabajando   && pt.trabajando.hora)   || '--';
-    var horaInicAlm       = (pt.almuerzo     && pt.almuerzo.hora)     || '--';
-    var horaFinAlm        = (pt.fin_almuerzo && pt.fin_almuerzo.hora) || '--';
-    var horaFinRuta       = (pt.finalizado   && pt.finalizado.hora)   || (estado === 'finalizado' ? hora : '--');
+    var pt=datosPuntos[nombre]||{};
+    var hIS=(pt.trabajando&&pt.trabajando.hora)||'--';
+    var hIA=(pt.almuerzo&&pt.almuerzo.hora)||'--';
+    var hFA=(pt.fin_almuerzo&&pt.fin_almuerzo.hora)||'--';
+    var hFR=(pt.finalizado&&pt.finalizado.hora)||(estado==='finalizado'?hora:'--');
+    var cIS=pt.trabajando   ? (+(pt.trabajando.latitud||0)).toFixed(5)+', '+(+(pt.trabajando.longitud||0)).toFixed(5)   : '--';
+    var cIA=pt.almuerzo     ? (+(pt.almuerzo.latitud||0)).toFixed(5)+', '+(+(pt.almuerzo.longitud||0)).toFixed(5)       : '--';
+    var cFA=pt.fin_almuerzo ? (+(pt.fin_almuerzo.latitud||0)).toFixed(5)+', '+(+(pt.fin_almuerzo.longitud||0)).toFixed(5): '--';
+    var cFR=pt.finalizado   ? (+(pt.finalizado.latitud||0)).toFixed(5)+', '+(+(pt.finalizado.longitud||0)).toFixed(5)   : '--';
 
-    var latInicioSesion   = pt.trabajando   ? (+(pt.trabajando.latitud||0)).toFixed(5)   + ', ' + (+(pt.trabajando.longitud||0)).toFixed(5)   : '--';
-    var latInicAlm        = pt.almuerzo     ? (+(pt.almuerzo.latitud||0)).toFixed(5)     + ', ' + (+(pt.almuerzo.longitud||0)).toFixed(5)     : '--';
-    var latFinAlm         = pt.fin_almuerzo ? (+(pt.fin_almuerzo.latitud||0)).toFixed(5) + ', ' + (+(pt.fin_almuerzo.longitud||0)).toFixed(5) : '--';
-    var latFinRuta        = pt.finalizado   ? (+(pt.finalizado.latitud||0)).toFixed(5)   + ', ' + (+(pt.finalizado.longitud||0)).toFixed(5)   : '--';
-
-    var fechaHoy = new Date().toLocaleDateString('es-EC');
-
-    // Chequeo de detención (>20 min)
-    var pos = lat + ',' + lon;
-    var alertaHTML = '';
-    if (ultimaPosicion[nombre] === pos) {
-      if (!tiempoParado[nombre]) {
-        tiempoParado[nombre] = Date.now();
-        horaParado[nombre]   = hora;
-      }
-      var mins = (Date.now() - tiempoParado[nombre]) / 60000;
-      if (mins > 20) {
-        alertaHTML = `<div class="popup-alerta">⚠ DETENIDO ${Math.floor(mins)} min desde ${horaParado[nombre] || '--'}<br>📍 ${(+lat).toFixed(5)}, ${(+lon).toFixed(5)}</div>`;
-        alertasHTML += `<div class="alerta-chip">⚠ ${nombre.split(' ')[0]} ${nombre.split(' ')[1]} · ${Math.floor(mins)} min parado</div>`;
-
-        // Marcador de alerta en el mapa
+    // Detección de parada >20 min
+    var pos=lat+','+lon, alertaPopup='';
+    if (ultimaPosicion[nombre]===pos) {
+      if (!tiempoParado[nombre]) { tiempoParado[nombre]=Date.now(); horaParado[nombre]=hora; }
+      var mins=(Date.now()-tiempoParado[nombre])/60000;
+      if (mins>20) {
+        alertaPopup=`<div class="pu-alert">⚠ DETENIDO ${Math.floor(mins)} min desde ${horaParado[nombre]||'--'}<br>📍 ${(+lat).toFixed(5)}, ${(+lon).toFixed(5)}</div>`;
+        alertasHTML+=`<div class="alerta-chip">⚠ ${nombre.split(' ').slice(0,2).join(' ')} · ${Math.floor(mins)} min</div>`;
+        // Marcador rojo de alerta
         if (!marcadoresAlerta[nombre]) {
-          marcadoresAlerta[nombre] = L.marker([lat, lon], {
-            icon: crearIconoAlerta(mins, horaParado[nombre], lat, lon),
-            zIndexOffset: 1000
-          }).addTo(map);
+          marcadoresAlerta[nombre]=L.marker([lat,lon],{icon:iconoAlerta(mins,horaParado[nombre]),zIndexOffset:1000}).addTo(map);
           marcadoresAlerta[nombre].bindPopup(`
-            <div class="popup-name" style="color:#ffd600;">⚠ ALERTA DETENCIÓN</div>
-            <div class="popup-row">COBRADOR &nbsp;<span>${nombre}</span></div>
-            <div class="popup-row">TIEMPO &nbsp;&nbsp;&nbsp;<span>${Math.floor(mins)} minutos</span></div>
-            <div class="popup-row">DETENIDO DESDE<span>${horaParado[nombre] || '--'}</span></div>
-            <div class="popup-row">LAT &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span>${(+lat).toFixed(6)}</span></div>
-            <div class="popup-row">LON &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span>${(+lon).toFixed(6)}</span></div>
+            <div class="pu-name" style="color:#ff1744;">⚠ ALERTA DETENCIÓN</div>
+            <div class="pu-row">COBRADOR &nbsp;<span>${nombre}</span></div>
+            <div class="pu-row">DETENIDO &nbsp;<span>${Math.floor(mins)} minutos</span></div>
+            <div class="pu-row">DESDE &nbsp;&nbsp;&nbsp;&nbsp;<span>${horaParado[nombre]||'--'}</span></div>
+            <div class="pu-row">LAT &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span>${(+lat).toFixed(6)}</span></div>
+            <div class="pu-row">LON &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span>${(+lon).toFixed(6)}</span></div>
           `);
         } else {
-          marcadoresAlerta[nombre].setLatLng([lat, lon]);
-          marcadoresAlerta[nombre].setIcon(crearIconoAlerta(mins, horaParado[nombre], lat, lon));
+          marcadoresAlerta[nombre].setLatLng([lat,lon]);
+          marcadoresAlerta[nombre].setIcon(iconoAlerta(mins,horaParado[nombre]));
         }
       }
     } else {
-      ultimaPosicion[nombre] = pos;
-      tiempoParado[nombre]   = Date.now();
-      horaParado[nombre]     = hora;
-      // Remover marcador de alerta si el cobrador se movió
-      if (marcadoresAlerta[nombre]) {
-        map.removeLayer(marcadoresAlerta[nombre]);
-        delete marcadoresAlerta[nombre];
-      }
+      ultimaPosicion[nombre]=pos; tiempoParado[nombre]=Date.now(); horaParado[nombre]=hora;
+      if (marcadoresAlerta[nombre]){ map.removeLayer(marcadoresAlerta[nombre]); delete marcadoresAlerta[nombre]; }
     }
 
-    // Popup completo con todos los datos
+    // Popup del marcador de posición actual
     marcadores[nombre].bindPopup(`
-      <div class="popup-name">${nombre}</div>
-      <div class="popup-row">ESTADO &nbsp;&nbsp;<span>${estado.toUpperCase()}</span></div>
-      <div class="popup-row">FECHA &nbsp;&nbsp;&nbsp;<span>${d.fecha || fechaHoy}</span></div>
-      <div class="popup-row">ÚLT. HORA &nbsp;<span>${hora}</span></div>
-      <div class="popup-row">LAT &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span>${(+lat).toFixed(6)}</span></div>
-      <div class="popup-row">LON &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span>${(+lon).toFixed(6)}</span></div>
-      <div class="popup-section">
-        <div class="popup-section-title">Tiempos de Sesión</div>
-        <div class="popup-row">🟢 INICIO SESIÓN &nbsp;&nbsp;<span>${horaInicioSesion}</span></div>
-        <div class="popup-row" style="font-size:10px;color:#2a5070">📍 ${latInicioSesion}</div>
-        <div class="popup-row">☕ INICIO ALMUERZO<span>${horaInicAlm}</span></div>
-        <div class="popup-row" style="font-size:10px;color:#2a5070">📍 ${latInicAlm}</div>
-        <div class="popup-row">✅ FIN ALMUERZO &nbsp;&nbsp;<span>${horaFinAlm}</span></div>
-        <div class="popup-row" style="font-size:10px;color:#2a5070">📍 ${latFinAlm}</div>
-        <div class="popup-row">🏁 FIN RUTA &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span>${horaFinRuta}</span></div>
-        <div class="popup-row" style="font-size:10px;color:#2a5070">📍 ${latFinRuta}</div>
+      <div class="pu-name">${nombre}</div>
+      <div class="pu-row">ESTADO &nbsp;&nbsp;<span>${estado.toUpperCase()}</span></div>
+      <div class="pu-row">FECHA &nbsp;&nbsp;&nbsp;<span>${d.fecha||new Date().toLocaleDateString('es-EC')}</span></div>
+      <div class="pu-row">HORA &nbsp;&nbsp;&nbsp;&nbsp;<span>${hora}</span></div>
+      <div class="pu-row">LAT &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span>${(+lat).toFixed(6)}</span></div>
+      <div class="pu-row">LON &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span>${(+lon).toFixed(6)}</span></div>
+      <div class="pu-sec">
+        <div class="pu-sec-t">Tiempos registrados</div>
+        <div class="pu-row">🟢 INICIO SESIÓN &nbsp;&nbsp;<span>${hIS}</span></div>
+        <div class="pu-row" style="font-size:9px;color:#2a5070;margin-bottom:3px;">📍 ${cIS}</div>
+        <div class="pu-row">☕ INICIO ALMUERZO<span>${hIA}</span></div>
+        <div class="pu-row" style="font-size:9px;color:#2a5070;margin-bottom:3px;">📍 ${cIA}</div>
+        <div class="pu-row">✅ FIN ALMUERZO &nbsp;&nbsp;<span>${hFA}</span></div>
+        <div class="pu-row" style="font-size:9px;color:#2a5070;margin-bottom:3px;">📍 ${cFA}</div>
+        <div class="pu-row">🏁 FIN RUTA GPS &nbsp;&nbsp;<span>${hFR}</span></div>
+        <div class="pu-row" style="font-size:9px;color:#2a5070;margin-bottom:3px;">📍 ${cFR}</div>
       </div>
-      ${alertaHTML}
+      ${alertaPopup}
     `);
   }
 
-  // Contar cobradores sin GPS
-  COBRADORES_VALIDOS.forEach(function(nb) {
-    if (!datosCob[nb] || !datosCob[nb].latitud) sinGPS++;
-  });
-
-  document.getElementById('cnt-activos').textContent    = activos;
-  document.getElementById('cnt-almuerzo').textContent   = almuerzo;
-  document.getElementById('cnt-sin').textContent        = sinGPS;
-  document.getElementById('cnt-finalizados').textContent= finalizados;
-  document.getElementById('alertas-overlay').innerHTML  = alertasHTML;
-
+  COBRADORES.forEach(nb=>{ if (!datosCob[nb]||!datosCob[nb].latitud) sinGPS++; });
+  document.getElementById('cnt-activos').textContent   = activos;
+  document.getElementById('cnt-almuerzo').textContent  = almuerzo;
+  document.getElementById('cnt-sin').textContent       = sinGPS;
+  document.getElementById('cnt-finalizados').textContent = finalizados;
+  document.getElementById('alertas-overlay').innerHTML = alertasHTML;
   renderLista('');
 }
 
-// ── Mostrar/ocultar recorrido de un cobrador ──────────────────────
+// ── Mostrar recorrido en el mapa ──────────────────────────────────
 function mostrarRecorrido(nombre) {
-  // Ocultar recorrido anterior si es otro
-  if (recorridoActivo && recorridoActivo !== nombre) {
-    ocultarRecorrido(recorridoActivo);
-  }
+  if (recorridoActivo && recorridoActivo!==nombre) ocultarRecorrido(recorridoActivo);
 
-  var historial = historialRecorrido[nombre];
-  if (!historial) {
-    showToast('⚠ Sin historial de recorrido para ' + nombre.split(' ')[0]);
-    return false;
-  }
+  var hist = historialRec[nombre];
+  if (!hist) { showToast('⚠ Sin historial para '+nombre.split(' ')[0]); return false; }
 
-  // Construir array de coordenadas ordenadas por timestamp
   var puntos = [];
-  for (var ts in historial) {
-    var p = historial[ts];
-    if (p.latitud && p.longitud) {
-      puntos.push({ ts: parseInt(ts), lat: p.latitud, lon: p.longitud, hora: p.hora || '' });
-    }
+  for (var ts in hist) {
+    var p = hist[ts];
+    if (p.latitud && p.longitud) puntos.push({ ts:parseInt(ts), lat:p.latitud, lon:p.longitud, hora:p.hora||'', estado:p.estado||'trabajando' });
   }
-  puntos.sort(function(a,b) { return a.ts - b.ts; });
+  puntos.sort((a,b)=>a.ts-b.ts);
+  if (puntos.length<2){ showToast('⚠ Pocos puntos de recorrido'); return false; }
 
-  if (puntos.length < 2) {
-    showToast('⚠ Pocos puntos para trazar recorrido');
-    return false;
-  }
+  if (recorridoLayers[nombre]) recorridoLayers[nombre].forEach(l=>map.removeLayer(l));
+  recorridoLayers[nombre]=[];
 
-  var coords = puntos.map(function(p) { return [p.lat, p.lon]; });
+  var coords = puntos.map(p=>[p.lat,p.lon]);
 
-  // Polyline del recorrido
-  var estadoCob = datosCob[nombre] ? datosCob[nombre].estado : 'sin-gps';
-  var colorLinea = estadoCob === 'trabajando' ? '#00e676'
-                 : estadoCob === 'almuerzo'   ? '#ff9100'
-                 : estadoCob === 'finalizado' ? '#ff1744'
-                 : '#00c6ff';
-
-  if (recorridoLayers[nombre]) {
-    recorridoLayers[nombre].forEach(function(l) { map.removeLayer(l); });
-  }
-  recorridoLayers[nombre] = [];
-
-  // Línea principal
-  var polyline = L.polyline(coords, {
-    color: colorLinea, weight: 3, opacity: 0.8,
-    dashArray: '6,4'
+  // Polyline azul estilo Google Maps
+  var poly = L.polyline(coords,{
+    color:'#1a73e8', weight:4, opacity:0.85, lineJoin:'round', lineCap:'round'
   }).addTo(map);
-  recorridoLayers[nombre].push(polyline);
+  recorridoLayers[nombre].push(poly);
 
-  // Marcadores de cada punto del recorrido (circulitos pequeños)
-  puntos.forEach(function(p, i) {
-    var esInicio = i === 0;
-    var esFin    = i === puntos.length - 1;
-    var radius   = esInicio || esFin ? 7 : 4;
-    var fillColor= esInicio ? '#00c853' : esFin ? '#ff1744' : colorLinea;
-    var circle = L.circleMarker([p.lat, p.lon], {
-      radius: radius, color: '#fff', weight: 1.5,
-      fillColor: fillColor, fillOpacity: 0.9
-    }).addTo(map);
-    circle.bindPopup(`
-      <div class="popup-name" style="font-size:13px;">${esInicio ? '🟢 INICIO' : esFin ? '🏁 FIN' : '📍 PUNTO ' + (i+1)}</div>
-      <div class="popup-row">HORA &nbsp;<span>${p.hora}</span></div>
-      <div class="popup-row">LAT &nbsp;&nbsp;<span>${(+p.lat).toFixed(6)}</span></div>
-      <div class="popup-row">LON &nbsp;&nbsp;<span>${(+p.lon).toFixed(6)}</span></div>
-    `);
-    recorridoLayers[nombre].push(circle);
+  // Puntos del recorrido con hora
+  puntos.forEach(function(p,i) {
+    var esPrimero = i===0;
+    var esUltimo  = i===puntos.length-1;
+
+    if (esPrimero || esUltimo) {
+      // Punto inicio / fin grande
+      var col = esPrimero ? '#1a73e8' : '#ea4335';
+      var lbl = esPrimero ? 'A' : 'B';
+      var m = L.divIcon({
+        className:'',
+        html:`
+          <div style="display:flex;flex-direction:column;align-items:center;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.4));">
+            <div style="background:${col};color:#fff;width:28px;height:28px;border-radius:50% 50% 50% 4px;display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif;font-size:14px;font-weight:900;border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3);">${lbl}</div>
+            <div style="width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:6px solid ${col};margin-top:-1px;"></div>
+          </div>`,
+        iconSize:[28,38], iconAnchor:[14,38], popupAnchor:[0,-40]
+      });
+      var mk = L.marker([p.lat,p.lon],{icon:m,zIndexOffset:300}).addTo(map);
+      mk.bindPopup(`
+        <div class="pu-name" style="color:${col};">${esPrimero?'🟢 INICIO RECORRIDO':'🏁 FIN RECORRIDO'}</div>
+        <div class="pu-row">COBRADOR<span>${nombre}</span></div>
+        <div class="pu-row">HORA &nbsp;&nbsp;&nbsp;<span>${p.hora}</span></div>
+        <div class="pu-row">LAT &nbsp;&nbsp;&nbsp;&nbsp;<span>${(+p.lat).toFixed(6)}</span></div>
+        <div class="pu-row">LON &nbsp;&nbsp;&nbsp;&nbsp;<span>${(+p.lon).toFixed(6)}</span></div>
+      `);
+      recorridoLayers[nombre].push(mk);
+    } else {
+      // Punto intermedio: pequeño círculo con etiqueta de hora
+      var colorPunto = p.estado==='almuerzo'?'#f9ab00':'#1a73e8';
+      var mk2 = L.divIcon({
+        className:'',
+        html:`
+          <div style="display:flex;flex-direction:column;align-items:center;pointer-events:none;">
+            <div style="background:#fff;border:1.5px solid ${colorPunto};border-radius:3px;padding:1px 5px;font-family:Arial,sans-serif;font-size:9px;font-weight:700;color:${colorPunto};white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,0.2);margin-bottom:1px;">${p.hora}</div>
+            <div style="width:0;height:0;border-left:3px solid transparent;border-right:3px solid transparent;border-top:4px solid ${colorPunto};"></div>
+          </div>`,
+        iconSize:[60,22], iconAnchor:[30,22], popupAnchor:[0,-24]
+      });
+      var mk3 = L.marker([p.lat,p.lon],{icon:mk2}).addTo(map);
+      mk3.bindPopup(`
+        <div class="pu-name" style="font-size:13px;">📍 Punto ${i+1} de ${puntos.length}</div>
+        <div class="pu-row">COBRADOR<span>${nombre}</span></div>
+        <div class="pu-row">HORA &nbsp;&nbsp;&nbsp;<span>${p.hora}</span></div>
+        <div class="pu-row">ESTADO &nbsp;<span>${p.estado.toUpperCase()}</span></div>
+        <div class="pu-row">LAT &nbsp;&nbsp;&nbsp;&nbsp;<span>${(+p.lat).toFixed(6)}</span></div>
+        <div class="pu-row">LON &nbsp;&nbsp;&nbsp;&nbsp;<span>${(+p.lon).toFixed(6)}</span></div>
+      `);
+      recorridoLayers[nombre].push(mk3);
+    }
   });
 
-  // Centrar el mapa en el recorrido
-  map.fitBounds(polyline.getBounds(), { padding: [40,40] });
+  map.fitBounds(poly.getBounds(),{padding:[50,50]});
   recorridoActivo = nombre;
-  showToast('🗺 Recorrido de ' + nombre.split(' ')[0] + ' · ' + puntos.length + ' puntos');
+  showToast('🗺 Recorrido · '+puntos.length+' puntos · '+nombre.split(' ')[0]);
   return true;
 }
 
 function ocultarRecorrido(nombre) {
-  if (recorridoLayers[nombre]) {
-    recorridoLayers[nombre].forEach(function(l) { map.removeLayer(l); });
-    delete recorridoLayers[nombre];
-  }
-  if (recorridoActivo === nombre) recorridoActivo = null;
+  if (recorridoLayers[nombre]) { recorridoLayers[nombre].forEach(l=>map.removeLayer(l)); delete recorridoLayers[nombre]; }
+  if (recorridoActivo===nombre) recorridoActivo=null;
 }
 
-// ── Render de lista en sidebar ────────────────────────────────────
+// ── Render lista sidebar ──────────────────────────────────────────
 function renderLista(filtro) {
-  var container = document.getElementById('cobrador-list');
-  container.innerHTML = '';
+  var container=document.getElementById('cobrador-list');
+  container.innerHTML='';
+  var hoy=new Date().toLocaleDateString('es-EC');
 
-  var nombres = COBRADORES_VALIDOS.slice().sort();
-
-  nombres.forEach(function(nombre) {
+  COBRADORES.slice().sort().forEach(function(nombre) {
     if (filtro && !nombre.toLowerCase().includes(filtro.toLowerCase())) return;
+    var d=datosCob[nombre]||null;
+    var estado=d?(d.estado||'sin-gps'):'sin-gps';
+    var hora=d?(d.hora||'--:--'):'--:--';
+    var fecha=d?(d.fecha||(d.hora?hoy:'')):'';
+    var lat=d?d.latitud:null, lon=d?d.longitud:null;
+    var gps=!!(lat&&lon);
+    var pt=datosPuntos[nombre]||{};
 
-    var d      = datosCob[nombre] || null;
-    var estado = d ? (d.estado || 'sin-gps') : 'sin-gps';
-    var hora   = d ? (d.hora   || '--:--')   : '--:--';
-    var hoy    = new Date().toLocaleDateString('es-EC');
-    var fecha  = d ? (d.fecha  || (d.hora ? hoy : '')) : '';
-    var lat    = d ? d.latitud  : null;
-    var lon    = d ? d.longitud : null;
-    var tieneGPS = !!(lat && lon);
+    var hIS=(pt.trabajando&&pt.trabajando.hora)||'';
+    var hIA=(pt.almuerzo&&pt.almuerzo.hora)||'';
+    var hFA=(pt.fin_almuerzo&&pt.fin_almuerzo.hora)||'';
+    var hFR=(pt.finalizado&&pt.finalizado.hora)||(estado==='finalizado'?hora:'');
+    var cIS=pt.trabajando   ? (+(pt.trabajando.latitud||0)).toFixed(4)+','+(+(pt.trabajando.longitud||0)).toFixed(4)   : '';
+    var cIA=pt.almuerzo     ? (+(pt.almuerzo.latitud||0)).toFixed(4)+','+(+(pt.almuerzo.longitud||0)).toFixed(4)       : '';
+    var cFA=pt.fin_almuerzo ? (+(pt.fin_almuerzo.latitud||0)).toFixed(4)+','+(+(pt.fin_almuerzo.longitud||0)).toFixed(4): '';
+    var cFR=pt.finalizado   ? (+(pt.finalizado.latitud||0)).toFixed(4)+','+(+(pt.finalizado.longitud||0)).toFixed(4)   : '';
 
-    // Puntos de evento
-    var pt = datosPuntos[nombre] || {};
-    var horaInicioSesion = (pt.trabajando   && pt.trabajando.hora)   || '';
-    var horaInicAlm      = (pt.almuerzo     && pt.almuerzo.hora)     || '';
-    var horaFinAlm       = (pt.fin_almuerzo && pt.fin_almuerzo.hora) || '';
-    var horaFinRuta      = (pt.finalizado   && pt.finalizado.hora)   || (estado==='finalizado' ? hora : '');
-
-    var coordInicioSesion = pt.trabajando   ? (+(pt.trabajando.latitud||0)).toFixed(4)   + ',' + (+(pt.trabajando.longitud||0)).toFixed(4)   : '';
-    var coordInicAlm      = pt.almuerzo     ? (+(pt.almuerzo.latitud||0)).toFixed(4)     + ',' + (+(pt.almuerzo.longitud||0)).toFixed(4)     : '';
-    var coordFinAlm       = pt.fin_almuerzo ? (+(pt.fin_almuerzo.latitud||0)).toFixed(4) + ',' + (+(pt.fin_almuerzo.longitud||0)).toFixed(4) : '';
-    var coordFinRuta      = pt.finalizado   ? (+(pt.finalizado.latitud||0)).toFixed(4)   + ',' + (+(pt.finalizado.longitud||0)).toFixed(4)   : '';
-
-    // Alerta de detención
-    var alertaHTML = '';
-    var pos = lat + ',' + lon;
-    if (tieneGPS && ultimaPosicion[nombre] === pos && tiempoParado[nombre]) {
-      var mins = (Date.now() - tiempoParado[nombre]) / 60000;
-      if (mins > 20) {
-        alertaHTML = `<div class="c-alert">⚠ ${Math.floor(mins)} min detenido · ${horaParado[nombre]||'--'} · ${(+lat).toFixed(4)},${(+lon).toFixed(4)}</div>`;
-      }
+    var alertaH='';
+    if (gps&&ultimaPosicion[nombre]===(lat+','+lon)&&tiempoParado[nombre]) {
+      var m=(Date.now()-tiempoParado[nombre])/60000;
+      if (m>20) alertaH=`<div class="c-alert">⚠ ${Math.floor(m)} min detenido · ${horaParado[nombre]||'--'}<br><span style="font-size:9px;color:#3d5a7a;">${(+lat).toFixed(4)},${(+lon).toFixed(4)}</span></div>`;
     }
 
-    var cls  = tieneGPS ? estado : 'sin-gps';
-    var pill = tieneGPS
-      ? `<span class="estado-pill pill-${estado}">${estado}</span>`
-      : `<span class="estado-pill pill-sin-gps">sin gps</span>`;
-
-    // Mostrar tiempos de eventos en la tarjeta
-    var eventosHTML = '';
-    if (horaInicioSesion || horaInicAlm || horaFinAlm || horaFinRuta) {
-      eventosHTML = `<div class="c-eventos">`;
-      if (horaInicioSesion) eventosHTML += `
-        <div class="c-evento-row">
-          <span style="color:#00c853;">🟢</span>
-          <span class="ev-label">SESIÓN</span>
-          <span class="ev-hora">${horaInicioSesion}</span>
-          ${coordInicioSesion ? `<span class="ev-coord">${coordInicioSesion}</span>` : ''}
-        </div>`;
-      if (horaInicAlm) eventosHTML += `
-        <div class="c-evento-row">
-          <span style="color:#ff9100;">☕</span>
-          <span class="ev-label">I.ALM</span>
-          <span class="ev-hora">${horaInicAlm}</span>
-          ${coordInicAlm ? `<span class="ev-coord">${coordInicAlm}</span>` : ''}
-        </div>`;
-      if (horaFinAlm) eventosHTML += `
-        <div class="c-evento-row">
-          <span style="color:#ffd600;">✅</span>
-          <span class="ev-label">F.ALM</span>
-          <span class="ev-hora">${horaFinAlm}</span>
-          ${coordFinAlm ? `<span class="ev-coord">${coordFinAlm}</span>` : ''}
-        </div>`;
-      if (horaFinRuta) eventosHTML += `
-        <div class="c-evento-row">
-          <span style="color:#ff1744;">🏁</span>
-          <span class="ev-label">FIN RUTA</span>
-          <span class="ev-hora">${horaFinRuta}</span>
-          ${coordFinRuta ? `<span class="ev-coord">${coordFinRuta}</span>` : ''}
-        </div>`;
-      eventosHTML += `</div>`;
+    var evHTML='';
+    if (hIS||hIA||hFA||hFR) {
+      evHTML='<div class="c-eventos">';
+      if(hIS) evHTML+=`<div class="c-ev"><span style="color:#1a73e8;">🟢</span><span>SESIÓN</span><span class="ev-h">${hIS}</span>${cIS?`<span class="ev-c">${cIS}</span>`:''}</div>`;
+      if(hIA) evHTML+=`<div class="c-ev"><span style="color:#f9ab00;">☕</span><span>I.ALM</span><span class="ev-h">${hIA}</span>${cIA?`<span class="ev-c">${cIA}</span>`:''}</div>`;
+      if(hFA) evHTML+=`<div class="c-ev"><span style="color:#34a853;">✅</span><span>F.ALM</span><span class="ev-h">${hFA}</span>${cFA?`<span class="ev-c">${cFA}</span>`:''}</div>`;
+      if(hFR) evHTML+=`<div class="c-ev"><span style="color:#ea4335;">🏁</span><span>FIN</span><span class="ev-h">${hFR}</span>${cFR?`<span class="ev-c">${cFR}</span>`:''}</div>`;
+      evHTML+='</div>';
     }
 
-    // Botón de recorrido (solo si tiene GPS)
-    var recorridoHTML = tieneGPS ? `
-      <button class="btn-recorrido ${recorridoActivo===nombre?'activo':''}" id="btn-rec-${CSS.escape(nombre)}"
-        onclick="toggleRecorrido('${nombre.replace(/'/g,"\\'")}', event)">
-        🗺 ${recorridoActivo===nombre ? 'Ocultar Recorrido' : 'Ver Recorrido'}
-      </button>` : '';
+    var btnRec=gps?`<button class="btn-rec ${recorridoActivo===nombre?'on':''}" id="brec-${nombre.replace(/ /g,'_')}" onclick="toggleRec('${nombre.replace(/'/g,"\\'")}',event)">🗺 ${recorridoActivo===nombre?'Ocultar':'Ver Recorrido'}</button>`:'';
 
-    var card = document.createElement('div');
-    card.className = `cobrador-card ${cls}`;
-    card.id = 'card-' + nombre.replace(/ /g,'_');
-    card.innerHTML = `
+    var card=document.createElement('div');
+    card.className=`cobrador-card ${gps?estado:'sin-gps'}`;
+    card.innerHTML=`
       <div class="c-name">${nombre}</div>
       <div class="c-meta">
-        ${pill}
+        <span class="estado-pill pill-${gps?estado:'sin-gps'}">${gps?estado:'sin gps'}</span>
         <span class="c-hora">${hora}</span>
       </div>
-      ${fecha ? `<div class="c-fecha">${fecha}</div>` : ''}
-      ${eventosHTML}
-      ${alertaHTML}
-      ${recorridoHTML}
-    `;
+      ${fecha?`<div class="c-fecha">${fecha}</div>`:''}
+      ${evHTML}${alertaH}${btnRec}`;
 
-    if (tieneGPS) {
-      card.onclick = function(e) {
-        if (e.target.closest('.btn-recorrido')) return; // evitar doble disparo
-        document.querySelectorAll('.cobrador-card').forEach(c => c.classList.remove('selected-card'));
-        card.classList.add('selected-card');
-        map.flyTo([lat, lon], 16, { duration: 1 });
-        if (marcadores[nombre]) marcadores[nombre].openPopup();
-        showToast('📍 ' + nombre);
-      };
-    }
-
+    if (gps) card.onclick=function(e){
+      if(e.target.closest('.btn-rec')) return;
+      document.querySelectorAll('.cobrador-card').forEach(c=>c.classList.remove('sel'));
+      card.classList.add('sel');
+      map.flyTo([lat,lon],16,{duration:1});
+      if(marcadores[nombre]) marcadores[nombre].openPopup();
+      showToast('📍 '+nombre);
+    };
     container.appendChild(card);
   });
 
-  if (container.children.length === 0) {
-    container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px;letter-spacing:2px;">SIN RESULTADOS</div>';
+  if (!container.children.length) {
+    container.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted);font-size:11px;letter-spacing:2px;">SIN RESULTADOS</div>';
   }
 }
 
-function toggleRecorrido(nombre, e) {
+function toggleRec(nombre,e) {
   e.stopPropagation();
-  if (recorridoActivo === nombre) {
-    ocultarRecorrido(nombre);
-    renderLista(document.getElementById('search').value);
+  if (recorridoActivo===nombre) {
+    ocultarRecorrido(nombre); renderLista(document.getElementById('search').value);
     showToast('🗺 Recorrido ocultado');
   } else {
-    var ok = mostrarRecorrido(nombre);
-    if (ok) renderLista(document.getElementById('search').value);
+    if (mostrarRecorrido(nombre)) renderLista(document.getElementById('search').value);
   }
 }
 
-function filtrarLista(val) { renderLista(val); }
+function filtrarLista(v){ renderLista(v); }
 
-// ── Vistas nav ────────────────────────────────────────────────────
-function setView(vista, btn) {
-  vistaActual = vista;
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
+// ── Vistas ────────────────────────────────────────────────────────
+function setView(vista,btn) {
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  var search=document.getElementById('search');
 
-  var search = document.getElementById('search');
-
-  if (vista === 'mapa') {
-    search.value = '';
-    renderLista('');
-    var lats=[], lons=[];
-    for (var n in marcadores) {
-      var ll = marcadores[n].getLatLng();
-      lats.push(ll.lat); lons.push(ll.lng);
-    }
-    if (lats.length > 0) {
-      map.fitBounds([
-        [Math.min.apply(null,lats), Math.min.apply(null,lons)],
-        [Math.max.apply(null,lats), Math.max.apply(null,lons)]
-      ], { padding:[40,40] });
-    }
+  if (vista==='mapa') {
+    search.value=''; renderLista('');
+    var lats=[],lons=[];
+    for(var n in marcadores){ var ll=marcadores[n].getLatLng(); lats.push(ll.lat); lons.push(ll.lng); }
+    if(lats.length) map.fitBounds([[Math.min(...lats),Math.min(...lons)],[Math.max(...lats),Math.max(...lons)]],{padding:[40,40]});
     return;
   }
 
-  // Para todas las demás vistas, filtrar y mostrar tarjetas específicas
-  var container = document.getElementById('cobrador-list');
-  container.innerHTML = '';
-  search.value = '';
-
-  var listaFiltrada = [];
-  if (vista === 'activos')     listaFiltrada = COBRADORES_VALIDOS.filter(n => datosCob[n] && datosCob[n].estado === 'trabajando');
-  if (vista === 'almuerzo')    listaFiltrada = COBRADORES_VALIDOS.filter(n => datosCob[n] && datosCob[n].estado === 'almuerzo');
-  if (vista === 'finalizados') listaFiltrada = COBRADORES_VALIDOS.filter(n => datosCob[n] && datosCob[n].estado === 'finalizado');
-  if (vista === 'sin-gps')     listaFiltrada = COBRADORES_VALIDOS.filter(n => !datosCob[n] || !datosCob[n].latitud);
-  if (vista === 'detenciones') {
-    listaFiltrada = COBRADORES_VALIDOS.filter(function(n) {
-      var d = datosCob[n]; if (!d || !d.latitud) return false;
-      var pos = d.latitud + ',' + d.longitud;
-      if (ultimaPosicion[n] === pos && tiempoParado[n]) {
-        return (Date.now() - tiempoParado[n]) / 60000 > 20;
-      }
-      return false;
-    });
-  }
-
-  // Reusar renderLista con filtro por nombre temporal
-  var tempNombres = listaFiltrada;
-  tempNombres.forEach(function(nombre) {
-    var d      = datosCob[nombre] || {};
-    var pt     = datosPuntos[nombre] || {};
-    var estado = d.estado || 'sin-gps';
-    var hora   = d.hora   || '--:--';
-    var lat    = d.latitud; var lon = d.longitud;
-    var tieneGPS = !!(lat && lon);
-
-    var horaInicioSesion = (pt.trabajando   && pt.trabajando.hora)   || '';
-    var horaInicAlm      = (pt.almuerzo     && pt.almuerzo.hora)     || '';
-    var horaFinAlm       = (pt.fin_almuerzo && pt.fin_almuerzo.hora) || '';
-    var horaFinRuta      = (pt.finalizado   && pt.finalizado.hora)   || (estado==='finalizado'?hora:'');
-
-    var minsDetenido = 0;
-    if (vista === 'detenciones' && tiempoParado[nombre]) {
-      minsDetenido = Math.floor((Date.now() - tiempoParado[nombre]) / 60000);
+  var filtros={
+    activos:     n=>datosCob[n]&&datosCob[n].estado==='trabajando',
+    almuerzo:    n=>datosCob[n]&&datosCob[n].estado==='almuerzo',
+    finalizados: n=>datosCob[n]&&datosCob[n].estado==='finalizado',
+    'sin-gps':   n=>!datosCob[n]||!datosCob[n].latitud,
+    detenciones: n=>{
+      var d=datosCob[n]; if(!d||!d.latitud) return false;
+      var pos=d.latitud+','+d.longitud;
+      return ultimaPosicion[n]===pos && tiempoParado[n] && (Date.now()-tiempoParado[n])/60000>20;
     }
+  };
+  var lista=COBRADORES.filter(filtros[vista]||filtros['sin-gps']);
+  var container=document.getElementById('cobrador-list');
+  container.innerHTML=''; search.value='';
 
-    var card = document.createElement('div');
-    card.className = `cobrador-card ${tieneGPS ? estado : 'sin-gps'}`;
-    card.innerHTML = `
+  var hoy=new Date().toLocaleDateString('es-EC');
+  lista.forEach(function(nombre){
+    var d=datosCob[nombre]||{};
+    var pt=datosPuntos[nombre]||{};
+    var estado=d.estado||'sin-gps', hora=d.hora||'--:--';
+    var lat=d.latitud, lon=d.longitud, gps=!!(lat&&lon);
+    var hIS=(pt.trabajando&&pt.trabajando.hora)||'';
+    var hIA=(pt.almuerzo&&pt.almuerzo.hora)||'';
+    var hFA=(pt.fin_almuerzo&&pt.fin_almuerzo.hora)||'';
+    var hFR=(pt.finalizado&&pt.finalizado.hora)||(estado==='finalizado'?hora:'');
+    var mins=vista==='detenciones'&&tiempoParado[nombre]?Math.floor((Date.now()-tiempoParado[nombre])/60000):0;
+    var card=document.createElement('div');
+    card.className=`cobrador-card ${gps?estado:'sin-gps'}`;
+    card.innerHTML=`
       <div class="c-name">${nombre}</div>
       <div class="c-meta">
-        <span class="estado-pill pill-${tieneGPS?estado:'sin-gps'}">${tieneGPS ? (vista==='detenciones'?'⚠ detenido':estado) : 'sin gps'}</span>
-        <span class="c-hora">${vista==='detenciones' ? minsDetenido+' min' : hora}</span>
+        <span class="estado-pill pill-${gps?estado:'sin-gps'}">${vista==='detenciones'?'⚠ detenido':(gps?estado:'sin gps')}</span>
+        <span class="c-hora">${vista==='detenciones'?mins+' min':hora}</span>
       </div>
-      ${d.fecha || d.hora ? `<div class="c-fecha">${d.fecha || new Date().toLocaleDateString('es-EC')}</div>` : ''}
-      ${horaInicioSesion || horaInicAlm || horaFinAlm || horaFinRuta ? `
-        <div class="c-eventos" style="margin-top:5px;">
-          ${horaInicioSesion ? `<div class="c-evento-row"><span style="color:#00c853;">🟢</span><span class="ev-label">SESIÓN</span><span class="ev-hora">${horaInicioSesion}</span></div>` : ''}
-          ${horaInicAlm      ? `<div class="c-evento-row"><span style="color:#ff9100;">☕</span><span class="ev-label">I.ALM</span><span class="ev-hora">${horaInicAlm}</span></div>` : ''}
-          ${horaFinAlm       ? `<div class="c-evento-row"><span style="color:#ffd600;">✅</span><span class="ev-label">F.ALM</span><span class="ev-hora">${horaFinAlm}</span></div>` : ''}
-          ${horaFinRuta      ? `<div class="c-evento-row"><span style="color:#ff1744;">🏁</span><span class="ev-label">FIN RUTA</span><span class="ev-hora">${horaFinRuta}</span></div>` : ''}
-        </div>` : ''}
-      ${vista==='detenciones' ? `<div class="c-alert">⚠ Desde ${horaParado[nombre]||'--'} · ${(+lat).toFixed(4)},${(+lon).toFixed(4)}</div>` : ''}
-    `;
-    if (tieneGPS) {
-      card.onclick = function() {
-        map.flyTo([lat, lon], 16, {duration:1});
-        if (marcadores[nombre]) marcadores[nombre].openPopup();
-        showToast('📍 ' + nombre);
-      };
-    }
+      ${(d.fecha||d.hora)?`<div class="c-fecha">${d.fecha||hoy}</div>`:''}
+      ${(hIS||hIA||hFA||hFR)?`<div class="c-eventos">
+        ${hIS?`<div class="c-ev"><span style="color:#1a73e8;">🟢</span><span>SESIÓN</span><span class="ev-h">${hIS}</span></div>`:''}
+        ${hIA?`<div class="c-ev"><span style="color:#f9ab00;">☕</span><span>I.ALM</span><span class="ev-h">${hIA}</span></div>`:''}
+        ${hFA?`<div class="c-ev"><span style="color:#34a853;">✅</span><span>F.ALM</span><span class="ev-h">${hFA}</span></div>`:''}
+        ${hFR?`<div class="c-ev"><span style="color:#ea4335;">🏁</span><span>FIN</span><span class="ev-h">${hFR}</span></div>`:''}
+      </div>`:''}
+      ${vista==='detenciones'?`<div class="c-alert">⚠ Desde ${horaParado[nombre]||'--'} · ${(+lat).toFixed(4)},${(+lon).toFixed(4)}</div>`:''}`;
+    if(gps) card.onclick=()=>{ map.flyTo([lat,lon],16,{duration:1}); if(marcadores[nombre]) marcadores[nombre].openPopup(); showToast('📍 '+nombre); };
     container.appendChild(card);
   });
 
-  var msgs = { activos:'🟢', almuerzo:'☕', finalizados:'🏁', 'sin-gps':'🔴', detenciones:'⚠' };
-  var etqs = { activos:'activos', almuerzo:'en almuerzo', finalizados:'finalizados', 'sin-gps':'sin GPS', detenciones:'detenidos >20 min' };
-  if (!tempNombres.length) {
-    var noMsg = { activos:'NINGUNO ACTIVO', almuerzo:'NADIE EN ALMUERZO', finalizados:'NINGUNO FINALIZADO', 'sin-gps':'TODOS CON GPS ✓', detenciones:'SIN DETENCIONES ✓' };
-    container.innerHTML = `<div style="padding:20px;text-align:center;color:var(--muted);font-size:11px;letter-spacing:2px;">${noMsg[vista]||'SIN DATOS'}</div>`;
-  }
-  showToast(`${msgs[vista]||'📋'} ${tempNombres.length} ${etqs[vista]||''}`);
+  var vacios={activos:'NINGUNO ACTIVO',almuerzo:'NADIE EN ALMUERZO',finalizados:'NINGUNO FINALIZADO','sin-gps':'TODOS CON GPS ✓',detenciones:'SIN DETENCIONES ✓'};
+  if(!lista.length) container.innerHTML=`<div style="padding:20px;text-align:center;color:var(--muted);font-size:11px;letter-spacing:2px;">${vacios[vista]||'SIN DATOS'}</div>`;
+  var emojis={activos:'🟢',almuerzo:'☕',finalizados:'🏁','sin-gps':'🔴',detenciones:'⚠'};
+  showToast(`${emojis[vista]||'📋'} ${lista.length} ${vista}`);
 }
 
-// ── Modal borrar ──────────────────────────────────────────────────
-function confirmarBorrar() { document.getElementById('modal-borrar').classList.add('active'); }
-function cerrarModalBorrar() { document.getElementById('modal-borrar').classList.remove('active'); }
-function borrarTodosLosDatos() {
+// ── Borrar datos ──────────────────────────────────────────────────
+function confirmarBorrar(){ document.getElementById('modal-borrar').classList.add('active'); }
+function cerrarModalBorrar(){ document.getElementById('modal-borrar').classList.remove('active'); }
+function borrarTodosLosDatos(){
   cerrarModalBorrar();
-  db.ref('cobradores').remove();
-  db.ref('puntos').remove();
-  db.ref('historial').remove();
-  for (var n in marcadores) { map.removeLayer(marcadores[n]); }
-  marcadores = {};
-  for (var nb in marcadoresPuntos) { for (var ev in marcadoresPuntos[nb]) map.removeLayer(marcadoresPuntos[nb][ev]); }
-  marcadoresPuntos = {};
-  for (var na in marcadoresAlerta) { map.removeLayer(marcadoresAlerta[na]); }
-  marcadoresAlerta = {};
-  for (var nr in recorridoLayers) { recorridoLayers[nr].forEach(l=>map.removeLayer(l)); }
-  recorridoLayers = {};
-  recorridoActivo = null;
-  datosCob = {}; datosPuntos = {}; historialRecorrido = {};
-  ultimaPosicion = {}; tiempoParado = {}; horaParado = {};
-  ['cnt-activos','cnt-almuerzo','cnt-sin','cnt-finalizados'].forEach(id => document.getElementById(id).textContent='0');
-  document.getElementById('alertas-overlay').innerHTML = '';
-  renderLista('');
-  showToast('🗑 Todos los datos borrados');
+  db.ref('cobradores').remove(); db.ref('puntos').remove(); db.ref('historial').remove();
+  for(var n in marcadores) map.removeLayer(marcadores[n]); marcadores={};
+  for(var nb in marcadoresPuntos){ for(var ev in marcadoresPuntos[nb]) map.removeLayer(marcadoresPuntos[nb][ev]); } marcadoresPuntos={};
+  for(var na in marcadoresAlerta) map.removeLayer(marcadoresAlerta[na]); marcadoresAlerta={};
+  for(var nr in recorridoLayers){ recorridoLayers[nr].forEach(l=>map.removeLayer(l)); } recorridoLayers={};
+  recorridoActivo=null; datosCob={}; datosPuntos={}; historialRec={};
+  ultimaPosicion={}; tiempoParado={}; horaParado={};
+  ['cnt-activos','cnt-almuerzo','cnt-sin','cnt-finalizados'].forEach(id=>document.getElementById(id).textContent='0');
+  document.getElementById('alertas-overlay').innerHTML='';
+  renderLista(''); showToast('🗑 Datos borrados');
 }
 
-// ── Descargar Excel mejorado ──────────────────────────────────────
-function descargarExcel() {
-  // Construir índices case-insensitive
-  var cobIdx = {};
-  for (var nc in datosCob) cobIdx[nc.toUpperCase()] = datosCob[nc];
-  var ptIdx = {};
-  for (var nb in datosPuntos) ptIdx[nb.toUpperCase()] = datosPuntos[nb];
+// ── Excel mejorado ────────────────────────────────────────────────
+function descargarExcel(){
+  var cobIdx={}, ptIdx={};
+  for(var nc in datosCob) cobIdx[nc.toUpperCase()]=datosCob[nc];
+  for(var nb in datosPuntos) ptIdx[nb.toUpperCase()]=datosPuntos[nb];
+  var hoy=new Date().toLocaleDateString('es-EC');
+  var ahora=new Date().toLocaleString('es-EC');
 
-  var hoy    = new Date().toLocaleDateString('es-EC');
-  var ahora  = new Date().toLocaleString('es-EC');
-
-  // ─── HOJA 1: Resumen ───────────────────────────────────────────
-  var wsData = [
-    ['REPORTE GPS COBRADORES', '', '', '', '', '', '', '', '', '', '', ''],
-    ['Generado:', ahora, '', '', '', '', '', '', '', '', '', ''],
-    ['', '', '', '', '', '', '', '', '', '', '', ''],
-    [
-      'N°',
-      'COBRADOR',
-      'ESTADO ACTUAL',
-      'FECHA',
-      'HORA INICIO SESIÓN',
-      'FECHA INICIO SESIÓN',
-      'COORD. INICIO SESIÓN',
-      'HORA INICIO ALMUERZO',
-      'FECHA INICIO ALMUERZO',
-      'COORD. INICIO ALMUERZO',
-      'HORA FIN ALMUERZO',
-      'FECHA FIN ALMUERZO',
-      'COORD. FIN ALMUERZO',
-      'HORA FIN RUTA GPS',
-      'FECHA FIN RUTA',
-      'COORD. FIN RUTA',
-      'ÚLT. LATITUD',
-      'ÚLT. LONGITUD',
-      'ÚLT. HORA POSICIÓN',
-      'TIEMPO DETENIDO (min)',
-      'ALERTA DETENCIÓN'
-    ]
+  // Hoja 1 — Reporte del día
+  var ws1Data=[
+    ['REPORTE GPS COBRADORES','','','','','','','','','','','','','','','','','','','',''],
+    ['Generado:',ahora,'','','','','','','','','','','','','','','','','','',''],
+    [''],
+    ['N°','COBRADOR','ESTADO','FECHA',
+     'HORA INICIO SESIÓN','FECHA I.SESIÓN','COORD. INICIO SESIÓN',
+     'HORA INICIO ALMUERZO','FECHA I.ALMUERZO','COORD. INICIO ALMUERZO',
+     'HORA FIN ALMUERZO','FECHA F.ALMUERZO','COORD. FIN ALMUERZO',
+     'HORA FIN RUTA GPS','FECHA FIN RUTA','COORD. FIN RUTA',
+     'ÚLT. LATITUD','ÚLT. LONGITUD','ÚLT. HORA',
+     'TIEMPO DETENIDO (min)','ALERTA']
   ];
 
-  COBRADORES_VALIDOS.forEach(function(nombre, i) {
-    var d  = cobIdx[nombre] || {};
-    var pt = ptIdx[nombre]  || {};
-
-    var horaFinRuta = (pt.finalizado && pt.finalizado.hora)
-                   || (d.estado === 'finalizado' ? d.hora : '');
-
-    // Calcular tiempo detenido
-    var minsDetenido = '';
-    var alertaDet    = '';
-    if (d.latitud && d.longitud) {
-      var pos = d.latitud + ',' + d.longitud;
-      if (ultimaPosicion[nombre] === pos && tiempoParado[nombre]) {
-        var mins = Math.floor((Date.now() - tiempoParado[nombre]) / 60000);
-        if (mins > 0) {
-          minsDetenido = mins;
-          if (mins > 20) alertaDet = '⚠ DETENIDO ' + mins + ' min desde ' + (horaParado[nombre]||'--');
-        }
+  COBRADORES.forEach(function(nombre,i){
+    var d=cobIdx[nombre]||{}, pt=ptIdx[nombre]||{};
+    var hFR=(pt.finalizado&&pt.finalizado.hora)||(d.estado==='finalizado'?d.hora:'');
+    var minsD='', alertD='';
+    if(d.latitud&&d.longitud){
+      var pos=d.latitud+','+d.longitud;
+      if(ultimaPosicion[nombre]===pos&&tiempoParado[nombre]){
+        var m=Math.floor((Date.now()-tiempoParado[nombre])/60000);
+        if(m>0){ minsD=m; if(m>20) alertD='⚠ DETENIDO '+m+' min desde '+(horaParado[nombre]||'--'); }
       }
     }
-
-    var coordInicioSesion = pt.trabajando   ? (+(pt.trabajando.latitud||0)).toFixed(6)   + ', ' + (+(pt.trabajando.longitud||0)).toFixed(6)   : '';
-    var coordInicAlm      = pt.almuerzo     ? (+(pt.almuerzo.latitud||0)).toFixed(6)     + ', ' + (+(pt.almuerzo.longitud||0)).toFixed(6)     : '';
-    var coordFinAlm       = pt.fin_almuerzo ? (+(pt.fin_almuerzo.latitud||0)).toFixed(6) + ', ' + (+(pt.fin_almuerzo.longitud||0)).toFixed(6) : '';
-    var coordFinRuta      = pt.finalizado   ? (+(pt.finalizado.latitud||0)).toFixed(6)   + ', ' + (+(pt.finalizado.longitud||0)).toFixed(6)   : '';
-
-    wsData.push([
-      i + 1,
-      nombre,
-      d.estado   || 'SIN GPS',
-      d.fecha    || (d.hora ? hoy : ''),
-      (pt.trabajando   && pt.trabajando.hora)   || '',
-      (pt.trabajando   && pt.trabajando.fecha)  || '',
-      coordInicioSesion,
-      (pt.almuerzo     && pt.almuerzo.hora)     || '',
-      (pt.almuerzo     && pt.almuerzo.fecha)    || '',
-      coordInicAlm,
-      (pt.fin_almuerzo && pt.fin_almuerzo.hora) || '',
-      (pt.fin_almuerzo && pt.fin_almuerzo.fecha)|| '',
-      coordFinAlm,
-      horaFinRuta,
-      (pt.finalizado   && pt.finalizado.fecha)  || '',
-      coordFinRuta,
-      d.latitud  || '',
-      d.longitud || '',
-      d.hora     || '',
-      minsDetenido,
-      alertaDet
+    var cIS=pt.trabajando?   (+(pt.trabajando.latitud||0)).toFixed(6)+', '+(+(pt.trabajando.longitud||0)).toFixed(6):'';
+    var cIA=pt.almuerzo?     (+(pt.almuerzo.latitud||0)).toFixed(6)+', '+(+(pt.almuerzo.longitud||0)).toFixed(6):'';
+    var cFA=pt.fin_almuerzo? (+(pt.fin_almuerzo.latitud||0)).toFixed(6)+', '+(+(pt.fin_almuerzo.longitud||0)).toFixed(6):'';
+    var cFR=pt.finalizado?   (+(pt.finalizado.latitud||0)).toFixed(6)+', '+(+(pt.finalizado.longitud||0)).toFixed(6):'';
+    ws1Data.push([
+      i+1, nombre, d.estado||'SIN GPS', d.fecha||(d.hora?hoy:''),
+      (pt.trabajando&&pt.trabajando.hora)||'',(pt.trabajando&&pt.trabajando.fecha)||'',cIS,
+      (pt.almuerzo&&pt.almuerzo.hora)||'',(pt.almuerzo&&pt.almuerzo.fecha)||'',cIA,
+      (pt.fin_almuerzo&&pt.fin_almuerzo.hora)||'',(pt.fin_almuerzo&&pt.fin_almuerzo.fecha)||'',cFA,
+      hFR,(pt.finalizado&&pt.finalizado.fecha)||'',cFR,
+      d.latitud||'',d.longitud||'',d.hora||'',minsD,alertD
     ]);
   });
 
-  // ─── HOJA 2: Historial de recorrido ───────────────────────────
-  var wsRecorrido = [
-    ['HISTORIAL DE RECORRIDO GPS', '', '', '', '', ''],
-    ['Generado:', ahora, '', '', '', ''],
-    ['', '', '', '', '', ''],
-    ['COBRADOR', 'FECHA/HORA', 'LATITUD', 'LONGITUD', 'ESTADO', 'HORA']
+  // Hoja 2 — Historial de recorrido
+  var ws2Data=[
+    ['HISTORIAL DE RECORRIDO GPS (puntos cada 5 min)','','','','',''],
+    ['Generado:',ahora,'','','',''],
+    [''],
+    ['COBRADOR','FECHA/HORA','LATITUD','LONGITUD','ESTADO','HORA']
   ];
-
-  for (var nb in historialRecorrido) {
-    if (!esCobrador(nb)) continue;
-    var hist = historialRecorrido[nb];
-    var puntos = [];
-    for (var ts in hist) {
-      var p = hist[ts];
-      if (p.latitud && p.longitud) puntos.push({ ts: parseInt(ts), ...p });
-    }
-    puntos.sort(function(a,b){return a.ts-b.ts;});
-    puntos.forEach(function(p) {
-      wsRecorrido.push([
-        nb,
-        new Date(p.ts).toLocaleString('es-EC'),
-        p.latitud,
-        p.longitud,
-        p.estado || '',
-        p.hora   || ''
-      ]);
-    });
-    // Línea separadora entre cobradores
-    wsRecorrido.push(['', '', '', '', '', '']);
+  for(var nb in historialRec){
+    if(!esCob(nb)) continue;
+    var hist=historialRec[nb], pts=[];
+    for(var ts in hist){ var p=hist[ts]; if(p.latitud&&p.longitud) pts.push({ts:parseInt(ts),...p}); }
+    pts.sort((a,b)=>a.ts-b.ts);
+    pts.forEach(p=>ws2Data.push([nb,new Date(p.ts).toLocaleString('es-EC'),p.latitud,p.longitud,p.estado||'',p.hora||'']));
+    ws2Data.push(['','','','','','']);
   }
 
-  // Crear libro de Excel
-  var wb = XLSX.utils.book_new();
-
-  // Hoja 1
-  var ws1 = XLSX.utils.aoa_to_sheet(wsData);
-  // Anchos de columnas
-  ws1['!cols'] = [
-    {wch:4},{wch:40},{wch:14},{wch:12},
-    {wch:18},{wch:14},{wch:26},
-    {wch:20},{wch:14},{wch:26},
-    {wch:16},{wch:14},{wch:26},
-    {wch:18},{wch:14},{wch:26},
-    {wch:14},{wch:14},{wch:18},
-    {wch:18},{wch:30}
-  ];
-  // Merge para título
-  ws1['!merges'] = [{ s:{r:0,c:0}, e:{r:0,c:10} }];
-
-  // Hoja 2
-  var ws2 = XLSX.utils.aoa_to_sheet(wsRecorrido);
-  ws2['!cols'] = [{wch:40},{wch:22},{wch:14},{wch:14},{wch:14},{wch:12}];
-
-  XLSX.utils.book_append_sheet(wb, ws1, 'Reporte del Día');
-  XLSX.utils.book_append_sheet(wb, ws2, 'Historial Recorrido');
-
-  var fecha = new Date().toLocaleDateString('es-EC').replace(/\//g,'-');
-  XLSX.writeFile(wb, 'gps_cobradores_' + fecha + '.xlsx');
+  var wb=XLSX.utils.book_new();
+  var ws1=XLSX.utils.aoa_to_sheet(ws1Data);
+  ws1['!cols']=[{wch:4},{wch:42},{wch:13},{wch:12},{wch:18},{wch:13},{wch:26},{wch:20},{wch:13},{wch:26},{wch:16},{wch:13},{wch:26},{wch:18},{wch:13},{wch:26},{wch:14},{wch:14},{wch:16},{wch:18},{wch:32}];
+  ws1['!merges']=[{s:{r:0,c:0},e:{r:0,c:10}}];
+  var ws2=XLSX.utils.aoa_to_sheet(ws2Data);
+  ws2['!cols']=[{wch:42},{wch:22},{wch:14},{wch:14},{wch:14},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,ws1,'Reporte del Día');
+  XLSX.utils.book_append_sheet(wb,ws2,'Historial Recorrido');
+  XLSX.writeFile(wb,'gps_cobradores_'+hoy.replace(/\//g,'-')+'.xlsx');
   showToast('📥 Excel descargado · 2 hojas');
 }
 </script>
